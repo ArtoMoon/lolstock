@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold-100: #f0e6c8;
+  --color-gold-300: #c8a84b;
+  --color-gold-400: #b8942a;
+  --color-gold-500: #9d7a1e;
+
+  --color-blue-100: #c6e0ff;
+  --color-blue-400: #3d9be9;
+  --color-blue-500: #1a78c2;
+  --color-blue-600: #0f5fa3;
+  --color-blue-900: #0a1628;
+
+  --color-dark-100: #1e2d45;
+  --color-dark-200: #162035;
+  --color-dark-300: #0f1923;
+  --color-dark-400: #091420;
+  --color-dark-500: #050e18;
+
+  --color-surface-1: rgba(14, 25, 45, 0.85);
+  --color-surface-2: rgba(20, 35, 60, 0.70);
+  --color-surface-border: rgba(61, 155, 233, 0.18);
+  --color-surface-border-gold: rgba(200, 168, 75, 0.25);
+
+  --color-text-primary: #e8f0fe;
+  --color-text-secondary: #8bafd4;
+  --color-text-muted: #5a7a9a;
+
+  --color-status-stock: #22c55e;
+  --color-status-sold: #ef4444;
+  --color-status-active: #3b82f6;
+  --color-status-error: #f59e0b;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-dark-500);
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(61, 155, 233, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(200, 168, 75, 0.06) 0%, transparent 50%);
+    background-attachment: fixed;
+    color: var(--color-text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Animations that couldn't be easily converted to tailwind v4 classes */
+@layer utilities {
+  .animate-spin-slow {
+    animation: spin 0.8s linear infinite;
+  }
+}
