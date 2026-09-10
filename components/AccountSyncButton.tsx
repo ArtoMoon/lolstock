@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { syncAllAccounts, CheckResult } from '@/app/actions/accountSync';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 /**
  * "Tüm Hesapları Senkronize Et" butonu.
@@ -10,6 +11,7 @@ import { syncAllAccounts, CheckResult } from '@/app/actions/accountSync';
  * Rate-limit nedeniyle uzun sürebilir (~1.5s/hesap).
  */
 export default function AccountSyncButton() {
+  const { t } = useLanguage();
   const [isPending, startTransition] = useTransition();
   const [results, setResults] = useState<{
     summary: { total: number; success: number; failed: number };
@@ -35,10 +37,10 @@ export default function AccountSyncButton() {
         {isPending ? (
           <>
             <span className="inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin-slow" />
-            Senkronize ediliyor... (her hesap ~1.5s)
+            {t('syncing_progress')}
           </>
         ) : (
-          '🔄 Tüm Hesapları Senkronize Et'
+          `🔄 ${t('sync_all_btn')}`
         )}
       </button>
 
@@ -46,13 +48,13 @@ export default function AccountSyncButton() {
         <div className="bg-[#0e192d]/85 border border-[#3d9be9]/18 rounded-xl p-5 backdrop-blur-md text-sm">
           <div className="flex flex-wrap gap-4 mb-3">
             <span className="text-[#e8f0fe]">
-              Toplam: <strong>{results.summary.total}</strong>
+              {t('stat_total')}: <strong>{results.summary.total}</strong>
             </span>
             <span className="text-green-300">
-              ✅ Başarılı: <strong>{results.summary.success}</strong>
+              ✅ {t('sync_success')}: <strong>{results.summary.success}</strong>
             </span>
             <span className="text-red-300">
-              ❌ Hata: <strong>{results.summary.failed}</strong>
+              ❌ {t('sync_failed')}: <strong>{results.summary.failed}</strong>
             </span>
           </div>
 

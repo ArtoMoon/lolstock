@@ -43,9 +43,46 @@ export const translations = {
     // Action Bar & Filters
     search_placeholder: 'Riot ID (Örn: Faker#KR1) veya hesap ara...',
     tag_all: 'Tümü',
+    status_tags_title: 'DURUM TAGLARI',
+    reset_status: 'Durumu Sıfırla',
     add_account_btn: 'Yeni Hesap Ekle',
     sync_all_btn: 'Tüm Hesapları Senkronize Et',
     syncing_status: 'Senkronize ediliyor...',
+    syncing_progress: 'Senkronize ediliyor... (her hesap ~1.5s)',
+    sync_success: 'Başarılı',
+    sync_failed: 'Hata',
+    check_btn: 'Kontrol',
+    checking_btn: 'Kontrol...',
+
+    // Ranks
+    rank_all: '🏆 Tüm Ranklar',
+    rank_unranked: 'Derecesiz (Unranked)',
+    rank_iron: 'Demir (Iron)',
+    rank_bronze: 'Bronz (Bronze)',
+    rank_silver: 'Gümüş (Silver)',
+    rank_gold: 'Altın (Gold)',
+    rank_platinum: 'Platin (Platinum)',
+    rank_emerald: 'Zümrüt (Emerald)',
+    rank_diamond: 'Elmas (Diamond)',
+    rank_master_plus: 'Ustalık+ (Master / GM / Chal)',
+
+    // Relative Time & Win/Loss
+    time_just_now: 'Az önce',
+    time_mins_ago: '{m} dk önce',
+    time_hours_ago: '{h} sa önce',
+    time_yesterday: 'Dün',
+    time_not_checked: 'Kontrol edilmedi',
+    stat_win_char: 'G',
+    stat_loss_char: 'M',
+
+    // Regions
+    platform_tr: '🇹🇷 TR (Türkiye)',
+    platform_euw: '🇪🇺 West (Batı Avrupa)',
+    platform_eun: '🇪🇺 EUNE (Doğu Avrupa)',
+    platform_na: '🇺🇸 NA (Kuzey Amerika)',
+    platform_kr: '🇰🇷 KR (Kore)',
+    platform_br: '🇧🇷 BR (Brezilya)',
+    platform_ru: '🇷🇺 RU (Rusya)',
 
     // Table Columns & UI
     all_regions: 'Tüm Bölgeler',
@@ -174,9 +211,46 @@ export const translations = {
     // Action Bar & Filters
     search_placeholder: 'Search Riot ID (e.g. Faker#KR1) or account...',
     tag_all: 'All',
+    status_tags_title: 'STATUS TAGS',
+    reset_status: 'Reset Status',
     add_account_btn: 'Add New Account',
     sync_all_btn: 'Sync All Accounts',
     syncing_status: 'Syncing...',
+    syncing_progress: 'Syncing... (~1.5s per account)',
+    sync_success: 'Success',
+    sync_failed: 'Failed',
+    check_btn: 'Sync',
+    checking_btn: 'Checking...',
+
+    // Ranks
+    rank_all: '🏆 All Ranks',
+    rank_unranked: 'Unranked',
+    rank_iron: 'Iron',
+    rank_bronze: 'Bronze',
+    rank_silver: 'Silver',
+    rank_gold: 'Gold',
+    rank_platinum: 'Platinum',
+    rank_emerald: 'Emerald',
+    rank_diamond: 'Diamond',
+    rank_master_plus: 'Master+ (Master / GM / Chal)',
+
+    // Relative Time & Win/Loss
+    time_just_now: 'Just now',
+    time_mins_ago: '{m}m ago',
+    time_hours_ago: '{h}h ago',
+    time_yesterday: 'Yesterday',
+    time_not_checked: 'Not checked',
+    stat_win_char: 'W',
+    stat_loss_char: 'L',
+
+    // Regions
+    platform_tr: '🇹🇷 TR (Turkey)',
+    platform_euw: '🇪🇺 West (EU West)',
+    platform_eun: '🇪🇺 EUNE (EU Nordic & East)',
+    platform_na: '🇺🇸 NA (North America)',
+    platform_kr: '🇰🇷 KR (Korea)',
+    platform_br: '🇧🇷 BR (Brazil)',
+    platform_ru: '🇷🇺 RU (Russia)',
 
     // Table Columns & UI
     all_regions: 'All Regions',

@@ -5,24 +5,19 @@ import { addAccount } from '@/app/actions/accounts';
 import { sanitizeRiotId } from '@/lib/riot/utils';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
-const PLATFORMS = [
-  { value: 'TR1',  label: '🇹🇷 TR (Türkiye)' },
-  { value: 'EUW1', label: '🇪🇺 West (Batı Avrupa)' },
-  { value: 'EUN1', label: '🇪🇺 EUNE (Doğu Avrupa)' },
-  { value: 'NA1',  label: '🇺🇸 NA (Kuzey Amerika)' },
-  { value: 'KR',   label: '🇰🇷 KR (Kore)' },
-  { value: 'BR1',  label: '🇧🇷 BR (Brezilya)' },
-  { value: 'RU',   label: '🇷🇺 RU (Rusya)' },
-];
-
-/**
- * Yeni hesap ekleme formu.
- *
- * "GameName#TAG" formatında Riot ID ve bölge seçimi alır.
- * Server Action üzerinden PUUID çeker ve MongoDB'ye kaydeder.
- */
 export default function AddAccountForm() {
   const { t } = useLanguage();
+
+  const platforms = [
+    { value: 'TR1',  label: t('platform_tr') },
+    { value: 'EUW1', label: t('platform_euw') },
+    { value: 'EUN1', label: t('platform_eun') },
+    { value: 'NA1',  label: t('platform_na') },
+    { value: 'KR',   label: t('platform_kr') },
+    { value: 'BR1',  label: t('platform_br') },
+    { value: 'RU',   label: t('platform_ru') },
+  ];
+
   const [riotId, setRiotId] = useState('');
   const [username, setUsername] = useState('');
   const [platform, setPlatform] = useState('TR1');
@@ -72,7 +67,7 @@ export default function AddAccountForm() {
           disabled={isPending}
           aria-label={t('label_region')}
         >
-          {PLATFORMS.map((p) => (
+          {platforms.map((p) => (
             <option key={p.value} value={p.value} className="bg-[#0f1923] text-[#e8f0fe]">
               {p.label}
             </option>

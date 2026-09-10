@@ -19,19 +19,6 @@ export interface AccountTableProps {
   onPlatformFilterChange?: (platform: string) => void;
 }
 
-const RANK_OPTIONS = [
-  { value: '', label: '🏆 Tüm Ranklar' },
-  { value: 'UNRANKED', label: 'Derecesiz (Unranked)' },
-  { value: 'IRON', label: 'Demir (Iron)' },
-  { value: 'BRONZE', label: 'Bronz (Bronze)' },
-  { value: 'SILVER', label: 'Gümüş (Silver)' },
-  { value: 'GOLD', label: 'Altın (Gold)' },
-  { value: 'PLATINUM', label: 'Platin (Platinum)' },
-  { value: 'EMERALD', label: 'Zümrüt (Emerald)' },
-  { value: 'DIAMOND', label: 'Elmas (Diamond)' },
-  { value: 'MASTER+', label: 'Ustalık+ (Master / GM / Chal)' },
-];
-
 type ViewMode = 'grid' | 'compact-grid' | 'list' | 'table';
 type SortOption = 'lastChecked' | 'level_desc' | 'level_asc' | 'riotId_asc';
 
@@ -43,6 +30,19 @@ export default function AccountTable({
   onPlatformFilterChange,
 }: AccountTableProps) {
   const { t } = useLanguage();
+
+  const rankOptions = [
+    { value: '', label: t('rank_all') },
+    { value: 'UNRANKED', label: t('rank_unranked') },
+    { value: 'IRON', label: t('rank_iron') },
+    { value: 'BRONZE', label: t('rank_bronze') },
+    { value: 'SILVER', label: t('rank_silver') },
+    { value: 'GOLD', label: t('rank_gold') },
+    { value: 'PLATINUM', label: t('rank_platinum') },
+    { value: 'EMERALD', label: t('rank_emerald') },
+    { value: 'DIAMOND', label: t('rank_diamond') },
+    { value: 'MASTER+', label: t('rank_master_plus') },
+  ];
   const [internalStatus, setInternalStatus] = useState<AccountStatus | ''>('');
   const [internalPlatform, setInternalPlatform] = useState('');
   const [search, setSearch] = useState('');
@@ -171,14 +171,14 @@ export default function AccountTable({
       <div className="mb-4 bg-[#0a1322]/70 p-3.5 rounded-2xl border border-white/5 backdrop-blur-md">
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <span>🏷️</span> Durum Tagları
+            <span>🏷️</span> {t('status_tags_title')}
           </span>
           {statusFilter && (
             <button
               onClick={() => setStatusFilter('')}
               className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
             >
-              Durumu Sıfırla
+              {t('reset_status')}
             </button>
           )}
         </div>
@@ -409,7 +409,7 @@ export default function AccountTable({
           value={rankFilter}
           onChange={(e) => setRankFilter(e.target.value)}
         >
-          {RANK_OPTIONS.map((opt) => (
+          {rankOptions.map((opt) => (
             <option key={opt.value} value={opt.value} className="bg-[#0f1923] text-[#e8f0fe]">
               {opt.label}
             </option>

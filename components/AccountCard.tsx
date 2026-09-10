@@ -12,6 +12,7 @@ import PlatformBadge from './PlatformBadge';
 import RiotIdDisplay from './RiotIdDisplay';
 import { ddragon } from '@/lib/riot/ddragon';
 import type { AccountStatus } from '@/models/Account';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface AccountCardProps {
   account: AccountData;
@@ -21,10 +22,10 @@ interface AccountCardProps {
   onRankClick?: (rank: string) => void;
 }
 
-function getRankStyle(rank?: string) {
+function getRankStyle(rank?: string, unrankedLabel?: string) {
   if (!rank || rank.toUpperCase() === 'UNRANKED') {
     return {
-      tierTitle: 'Derecesiz',
+      tierTitle: unrankedLabel || 'Unranked',
       lpText: 'Unranked',
       tierColor: 'text-slate-400',
       borderColor: 'border-blue-500/20 hover:border-blue-400/50',
@@ -141,20 +142,24 @@ function getRankStyle(rank?: string) {
   }
 }
 
-function formatRelativeTime(date?: Date | string | null): string {
-  if (!date) return 'Kontrol edilmedi';
+function formatRelativeTime(
+  date?: Date | string | null,
+  t?: (k: any) => string,
+  lang: string = 'tr'
+): string {
+  if (!date) return t ? t('time_not_checked') : 'Not checked';
   const d = new Date(date);
-  if (isNaN(d.getTime()) || d.getTime() === 0) return 'Kontrol edilmedi';
+  if (isNaN(d.getTime()) || d.getTime() === 0) return t ? t('time_not_checked') : 'Not checked';
   const diffMs = Date.now() - d.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 2) return 'Az önce';
-  if (diffMins < 60) return `${diffMins} dk önce`;
-  if (diffHours < 24) return `${diffHours} sa önce`;
-  if (diffDays === 1) return 'Dün';
-  return d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
+  if (diffMins < 2) return t ? t('time_just_now') : 'Just now';
+  if (diffMins < 60) return t ? t('time_mins_ago').replace('{m}', String(diffMins)) : `${diffMins}m ago`;
+  if (diffHours < 24) return t ? t('time_hours_ago').replace('{h}', String(diffHours)) : `${diffHours}h ago`;
+  if (diffDays === 1) return t ? t('time_yesterday') : 'Yesterday';
+  return d.toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: '2-digit' });
 }
 
 export default function AccountCard({
@@ -164,18 +169,19 @@ export default function AccountCard({
   onPlatformClick,
   onRankClick,
 }: AccountCardProps) {
+  const { t, language } = useLanguage();
   const [isPending, startTransition] = useTransition();
   const [checkMsg, setCheckMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const rankStyle = getRankStyle(account.rank);
-  const relativeTime = formatRelativeTime(account.lastCheckedAt);
+  const rankStyle = getRankStyle(account.rank, t('unranked'));
+  const relativeTime = formatRelativeTime(account.lastCheckedAt, t, language);
 
   const soloRank = account.ranks?.solo;
   const totalGames = soloRank ? (soloRank.wins + soloRank.losses) : 0;
   const winRate = totalGames > 0 && soloRank ? Math.round((soloRank.wins / totalGames) * 100) : null;
 
   function handleDelete() {
-    if (!confirm(`"${account.riotId}" hesabını silmek istediğinizden emin misiniz?`)) return;
+    if (!confirm(t('delete_confirm'))) return;
     startTransition(async () => { await deleteAccount(account._id); });
   }
 
@@ -233,13 +239,13 @@ export default function AccountCard({
             <Link
               href={`/accounts/${account._id}`}
               className="text-xs text-slate-500 hover:text-blue-400 transition-colors"
-              title="Detaya Git"
+              title={t('detail_btn')}
             >
               ↗
             </Link>
           </div>
           <div className="flex items-center gap-3 text-xs text-slate-400">
-            <span>🕒 Son kontrol: {relativeTime}</span>
+            <span>🕒 {t('th_last_checked')}: {relativeTime}</span>
           </div>
         </div>
 
@@ -251,7 +257,7 @@ export default function AccountCard({
               {rankStyle.tierTitle}
             </span>
             <span className="text-[10px] text-slate-400 font-mono">
-              {winRate !== null ? `${winRate}% WR (${soloRank?.wins}G ${soloRank?.losses}M)` : rankStyle.lpText}
+              {winRate !== null ? `${winRate}% WR (${soloRank?.wins}${t('stat_win_char')} ${soloRank?.losses}${t('stat_loss_char')})` : rankStyle.lpText}
             </span>
           </div>
         </div>
@@ -267,7 +273,7 @@ export default function AccountCard({
             className="flex justify-center items-center bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 text-blue-300 w-8 h-8 rounded-lg transition-all cursor-pointer"
             onClick={handleCheck}
             disabled={isPending}
-            title="Senkronize Et"
+            title={t('sync_btn')}
           >
             <span className={isPending ? 'animate-spin-slow' : ''}>↻</span>
           </button>
@@ -275,13 +281,13 @@ export default function AccountCard({
             href={`/accounts/${account._id}`}
             className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 rounded-lg text-xs font-medium transition-colors"
           >
-            Detay
+            {t('detail_btn')}
           </Link>
           <button
             className="flex justify-center items-center text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 w-8 h-8 rounded-lg transition-all cursor-pointer"
             onClick={handleDelete}
             disabled={isPending}
-            title="Sil"
+            title={t('delete_btn')}
           >
             🗑
           </button>
@@ -348,7 +354,7 @@ export default function AccountCard({
           <Link
             href={`/accounts/${account._id}`}
             className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/20 text-slate-400 hover:text-blue-300 border border-white/10 hover:border-blue-500/30 flex items-center justify-center transition-all shrink-0 text-xs"
-            title="Detay Sayfasına Git"
+            title={t('detail_btn')}
           >
             ↗
           </Link>
@@ -375,7 +381,7 @@ export default function AccountCard({
                 {winRate}% WR
               </span>
               <span className="text-[9px] text-slate-500 font-mono">
-                {soloRank?.wins}G {soloRank?.losses}M
+                {soloRank?.wins}{t('stat_win_char')} {soloRank?.losses}{t('stat_loss_char')}
               </span>
             </div>
           ) : (
@@ -404,24 +410,24 @@ export default function AccountCard({
               onClick={handleCheck}
               disabled={isPending}
               className="h-7 px-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 hover:border-blue-400/40 text-blue-300 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer disabled:opacity-50"
-              title="Riot API ile Durum Kontrol Et"
+              title={t('sync_btn')}
             >
               <span className={isPending ? 'animate-spin-slow' : ''}>↻</span>
-              <span className="text-[11px]">{isPending ? 'Kontrol...' : 'Kontrol'}</span>
+              <span className="text-[11px]">{isPending ? t('checking_btn') : t('check_btn')}</span>
             </button>
 
             <Link
               href={`/accounts/${account._id}`}
               className="h-7 px-3 rounded-lg bg-gradient-to-r from-blue-600/30 to-blue-500/20 hover:from-blue-600/50 hover:to-blue-500/40 border border-blue-400/30 text-white text-[11px] font-semibold flex items-center gap-1 transition-all"
             >
-              Detay
+              {t('detail_btn')}
             </Link>
 
             <button
               onClick={handleDelete}
               disabled={isPending}
               className="h-7 w-7 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center justify-center cursor-pointer text-xs"
-              title="Sil"
+              title={t('delete_btn')}
             >
               🗑
             </button>
