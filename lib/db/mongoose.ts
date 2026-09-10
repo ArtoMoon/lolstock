@@ -11,8 +11,6 @@ import mongoose from 'mongoose';
  * @module lib/db/mongoose
  */
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mylol';
-
 /** Shared cached connection state across hot reloads */
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -34,31 +32,63 @@ if (!global._mongooseCache) {
   global._mongooseCache = cache;
 }
 
+export function getMongoUri(): string {
+  return (process.env.MONGODB_URI || 'mongodb://localhost:27017/mylol').trim();
+}
+
 /**
  * Returns a cached Mongoose connection, creating one if it does not exist yet.
  *
  * @returns {Promise<typeof mongoose>} The connected Mongoose instance.
- *
- * @example
- * import dbConnect from '@/lib/db/mongoose';
- * await dbConnect();
  */
 export default async function dbConnect(): Promise<typeof mongoose> {
-  if (cache.conn) {
+  if (cache.conn && mongoose.connection.readyState === 1) {
     return cache.conn;
   }
 
+  const uri = getMongoUri();
+
   if (!cache.promise) {
     cache.promise = mongoose
-      .connect(MONGODB_URI, {
+      .connect(uri, {
         bufferCommands: false,
+        serverSelectionTimeoutMS: 4000,
       })
       .then((instance) => {
         cache.conn = instance;
         return instance;
+      })
+      .catch((err) => {
+        cache.promise = null;
+        cache.conn = null;
+        throw err;
       });
   }
 
-  cache.conn = await cache.promise;
-  return cache.conn;
+  try {
+    cache.conn = await cache.promise;
+    return cache.conn;
+  } catch (err) {
+    cache.promise = null;
+    cache.conn = null;
+    throw err;
+  }
+}
+
+/**
+ * Disconnects existing connection and connects to a new MongoDB URI dynamically.
+ */
+export async function reconnectMongo(newUri: string): Promise<typeof mongoose> {
+  if (cache.conn || mongoose.connection.readyState !== 0) {
+    try {
+      await mongoose.disconnect();
+    } catch {
+      // Ignore disconnect errors
+    }
+  }
+  cache.conn = null;
+  cache.promise = null;
+
+  process.env.MONGODB_URI = newUri.trim();
+  return dbConnect();
 }

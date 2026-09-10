@@ -107,6 +107,17 @@ export const translations = {
     status_select_label: 'Hesap Durumunu Güncelle',
     status_updated: 'Durum güncellendi.',
 
+    // MongoDB Setup
+    onboarding_mongo_step_title: 'MongoDB Veritabanı Kurulumu',
+    onboarding_mongo_step_desc: 'Hesaplarınızı güvenle yerel diskinizde depolamak için MongoDB bağlantısı gereklidir.',
+    onboarding_mongo_input_label: 'MongoDB Bağlantı Adresi (URI)',
+    onboarding_mongo_placeholder: 'mongodb://localhost:27017/mylol (veya Atlas URI)',
+    onboarding_mongo_test_btn: 'MongoDB Bağlantısını Test Et & Kaydet',
+    onboarding_mongo_connected: '✓ MongoDB Bağlantısı Aktif & Çalışıyor',
+    onboarding_mongo_not_connected: '✕ MongoDB Bağlantısı Yok veya Hatalı',
+    onboarding_mongo_valid: '✓ MongoDB Bağlantısı Başarılı ve Kaydedildi!',
+    onboarding_mongo_invalid: '✕ Hata: MongoDB bağlantısı kurulamadı! Lütfen URI adresinizi ve MongoDB servisinin çalıştığını kontrol edin.',
+
     // Onboarding & API Key Modal
     onboarding_welcome_title: 'MyLoL\'e Hoş Geldiniz!',
     onboarding_welcome_desc: 'Tüm League of Legends ikincil ve smurf hesaplarınızı tek bir güvenli masaüstü panelinden yönetin.',
@@ -226,6 +237,17 @@ export const translations = {
     game_mode: 'Game Mode',
     status_select_label: 'Update Account Status',
     status_updated: 'Status updated.',
+
+    // MongoDB Setup
+    onboarding_mongo_step_title: 'MongoDB Database Setup',
+    onboarding_mongo_step_desc: 'A MongoDB connection is required to safely store your accounts on your local disk.',
+    onboarding_mongo_input_label: 'MongoDB Connection URI',
+    onboarding_mongo_placeholder: 'mongodb://localhost:27017/mylol (or Atlas URI)',
+    onboarding_mongo_test_btn: 'Test & Save MongoDB Connection',
+    onboarding_mongo_connected: '✓ MongoDB Connection Active & Running',
+    onboarding_mongo_not_connected: '✕ MongoDB Disconnected or Invalid',
+    onboarding_mongo_valid: '✓ MongoDB Connection Successful & Saved!',
+    onboarding_mongo_invalid: '✕ Error: Could not connect to MongoDB! Please verify the URI and that MongoDB service is running.',
 
     // Onboarding & API Key Modal
     onboarding_welcome_title: 'Welcome to MyLoL!',

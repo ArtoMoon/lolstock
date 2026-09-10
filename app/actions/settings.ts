@@ -1,16 +1,21 @@
 'use server';
 
 /**
- * Dinamik Sistem Ayarları ve Riot API Anahtarı Server Actions.
+ * Dinamik Sistem Ayarları, MongoDB Bağlantısı ve Riot API Anahtarı Server Actions.
  *
- * API anahtarını doğrudan veritabanında saklar, doğrular ve çalışma zamanında
- * dinamik olarak günceller. .env dosyasından çekilmez veya oraya yazılmaz.
+ * API anahtarını ve MongoDB URI ayarlarını doğrular, veritabanında saklar
+ * ve çalışma zamanında dinamik olarak günceller.
  *
  * @module app/actions/settings
  */
 
-import dbConnect from '@/lib/db/mongoose';
+import fs from 'fs';
+import path from 'path';
+import mongoose from 'mongoose';
+import dbConnect, { getMongoUri, reconnectMongo } from '@/lib/db/mongoose';
 import Setting from '@/models/Setting';
+
+const ENV_LOCAL_PATH = path.join(process.cwd(), '.env.local');
 
 export interface ApiKeyStatus {
   hasKey: boolean;
@@ -19,9 +24,15 @@ export interface ApiKeyStatus {
   updatedAt?: Date;
 }
 
+export interface MongoStatus {
+  connected: boolean;
+  uri: string;
+  maskedUri: string;
+  error?: string;
+}
+
 /**
  * Aktif Riot API anahtarını sadece veritabanından döner.
- * .env dosyasından kesinlikle okunmaz.
  */
 export async function getActiveApiKey(): Promise<string> {
   try {
@@ -38,7 +49,7 @@ export async function getActiveApiKey(): Promise<string> {
 }
 
 /**
- * Mevcut API Key durumunu döner (Yalnızca veritabanı kontrol edilir).
+ * Mevcut API Key durumunu döner.
  */
 export async function getApiKeyStatus(): Promise<ApiKeyStatus> {
   try {
@@ -67,6 +78,129 @@ export async function getApiKeyStatus(): Promise<ApiKeyStatus> {
 }
 
 /**
+ * MongoDB bağlantı durumunu ve mevcut URI'yi döner.
+ */
+export async function getMongoStatus(): Promise<MongoStatus> {
+  const currentUri = getMongoUri();
+  
+  // Şifreyi maskele (mongodb://user:password@host... ise)
+  let masked = currentUri;
+  try {
+    if (currentUri.includes('@')) {
+      masked = currentUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
+    }
+  } catch {
+    masked = currentUri;
+  }
+
+  try {
+    await dbConnect();
+    const isConnected = mongoose.connection.readyState === 1;
+    return {
+      connected: isConnected,
+      uri: currentUri,
+      maskedUri: masked,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Bağlantı kurulamadı.';
+    return {
+      connected: false,
+      uri: currentUri,
+      maskedUri: masked,
+      error: msg,
+    };
+  }
+}
+
+/**
+ * Verilen MongoDB URI adresini test eder.
+ */
+export async function verifyMongoConnection(uriToTest: string): Promise<{ valid: boolean; error?: string }> {
+  const cleanUri = uriToTest.trim();
+  if (!cleanUri.startsWith('mongodb://') && !cleanUri.startsWith('mongodb+srv://')) {
+    return {
+      valid: false,
+      error: 'MongoDB adresi "mongodb://" veya "mongodb+srv://" ile başlamalıdır.',
+    };
+  }
+
+  let testConn: mongoose.Connection | null = null;
+  try {
+    testConn = mongoose.createConnection(cleanUri, {
+      serverSelectionTimeoutMS: 4000,
+    });
+    await testConn.asPromise();
+    await testConn.close();
+    return { valid: true };
+  } catch (err: unknown) {
+    if (testConn) {
+      try {
+        await testConn.close();
+      } catch {
+        // Ignore
+      }
+    }
+    const msg = err instanceof Error ? err.message : 'Bağlantı hatası oluştu.';
+    return {
+      valid: false,
+      error: `MongoDB bağlantısı başarısız: ${msg}`,
+    };
+  }
+}
+
+/**
+ * Yeni MongoDB URI adresini kaydeder ve canlı bağlantıyı yeniler.
+ */
+export async function saveMongoUri(newUri: string): Promise<{ success: boolean; error?: string }> {
+  const cleanUri = newUri.trim();
+
+  // 1. Önce bağlantıyı doğrula
+  const verification = await verifyMongoConnection(cleanUri);
+  if (!verification.valid) {
+    return {
+      success: false,
+      error: verification.error || 'Bağlantı adresi doğrulanamadı.',
+    };
+  }
+
+  try {
+    // 2. Canlı bağlantıyı yenile
+    await reconnectMongo(cleanUri);
+
+    // 3. Veritabanına kaydet
+    await Setting.findOneAndUpdate(
+      { key: 'MONGODB_URI' },
+      { value: cleanUri },
+      { upsert: true, new: true }
+    );
+
+    // 4. Yeniden başlatmalarda geçerli olması için .env.local dosyasına kaydet
+    try {
+      let content = '';
+      if (fs.existsSync(ENV_LOCAL_PATH)) {
+        content = fs.readFileSync(ENV_LOCAL_PATH, 'utf8');
+      }
+      if (content.includes('MONGODB_URI=')) {
+        content = content.replace(/MONGODB_URI=.*/g, `MONGODB_URI=${cleanUri}`);
+      } else {
+        content = `MONGODB_URI=${cleanUri}\n` + content;
+      }
+      fs.writeFileSync(ENV_LOCAL_PATH, content.trim() + '\n', 'utf8');
+    } catch (e) {
+      console.warn('[Settings] .env.local MONGODB_URI kaydedilemedi:', e);
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'MongoDB ayarı kaydedilemedi.';
+    return {
+      success: false,
+      error: msg,
+    };
+  }
+}
+
+/**
  * Verilen Riot API anahtarını doğrudan Riot Games sunucusuna test isteği göndererek doğrular.
  */
 export async function verifyApiKey(keyToTest: string): Promise<{ valid: boolean; error?: string }> {
@@ -80,7 +214,6 @@ export async function verifyApiKey(keyToTest: string): Promise<{ valid: boolean;
   }
 
   try {
-    // Riot Games platform status endpoint'i ile hızlı ve hafif doğrulama
     const res = await fetch('https://tr1.api.riotgames.com/lol/status/v4/platform-data', {
       headers: {
         'X-Riot-Token': cleanKey,
@@ -114,7 +247,6 @@ export async function verifyApiKey(keyToTest: string): Promise<{ valid: boolean;
 
 /**
  * Yeni Riot API anahtarını sadece veritabanına kaydeder.
- * .env dosyasına dokunulmaz.
  */
 export async function saveApiKey(newKey: string): Promise<{ success: boolean; error?: string }> {
   const cleanKey = newKey.trim();
