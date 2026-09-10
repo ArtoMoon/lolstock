@@ -11,6 +11,7 @@
     "lint": "eslint",
     "electron:dev": "concurrently -k -s first -n \"NEXT,APP\" -c \"cyan,magenta\" \"cross-env PORT=3000 next dev\" \"wait-on http://127.0.0.1:3000 && electron .\"",
     "electron:build": "yarn build && electron-builder --win",
+    "electron:build:setup": "yarn build && electron-builder --win nsis",
     "electron:build:portable": "yarn build && electron-builder --win portable",
     "electron:build:dir": "yarn build && electron-builder --dir"
   },
@@ -64,7 +65,10 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "MyLoL"
+      "shortcutName": "MyLoL",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "MyLoL-Setup-${version}.exe"
     },
     "portable": {
       "artifactName": "MyLoL-Portable-${version}.exe"
