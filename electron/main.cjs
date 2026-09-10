@@ -4,18 +4,28 @@
  * Next.js yerel sunucusunu arka planda başlatır ve Chromium BrowserWindow içinde
  * MyLoL Alt-Account Dashboard uygulamasını çalıştırır.
  *
+ * Özellikler:
+ *  - Windows System Tray (Sistem Tepsisine Küçülme)
+ *  - Özel Görev Çubuğu ve Pencere İkonu (AppUserModelId desteği)
+ *  - Çerçevesiz başlık çubuğu & sürükleme alanı
+ *
  * @module electron/main
  */
 
-const { app, BrowserWindow, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const http = require('http');
 const net = require('net');
 const { fork } = require('child_process');
 const fs = require('fs');
 
+// Windows Görev Çubuğunda doğru uygulama ikonu ve gruplaması için zorunlu
+app.setAppUserModelId('com.mylol.dashboard');
+
 let mainWindow = null;
 let serverProcess = null;
+let tray = null;
+let isQuiting = false;
 const isDev = !app.isPackaged;
 
 /**
@@ -136,10 +146,8 @@ function waitForServer(url, timeoutMs = 30000) {
  */
 function startProductionServer(port) {
   return new Promise((resolve, reject) => {
-    // Standalone sunucu yolları (hem unpacked app, asar.unpacked hem de standalone desteği)
     const possibleServerPaths = [
       path.join(__dirname, '..', '.next', 'standalone', 'server.js'),
-      path.join(process.resourcesPath, 'app.asar.unpacked', '.next', 'standalone', 'server.js'),
       path.join(process.resourcesPath, 'app', '.next', 'standalone', 'server.js'),
       path.join(process.resourcesPath, '.next', 'standalone', 'server.js'),
     ];
@@ -183,18 +191,76 @@ function startProductionServer(port) {
 }
 
 /**
+ * Windows Sistem Tepsisi (System Tray) bileşenini oluşturur.
+ */
+function createSystemTray() {
+  const iconPath = path.join(__dirname, 'assets', 'icon_32.png');
+  const fallbackIco = path.join(__dirname, 'assets', 'icon.ico');
+  const finalIconPath = fs.existsSync(iconPath) ? iconPath : fallbackIco;
+
+  const trayIcon = nativeImage.createFromPath(finalIconPath);
+  tray = new Tray(trayIcon);
+  tray.setToolTip('MyLoL – Alt-Account Dashboard');
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'MyLoL\'ü Aç',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Çıkış',
+      click: () => {
+        isQuiting = true;
+        cleanup();
+        app.quit();
+      },
+    },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+
+  // Tek tık veya çift tıkta pencereyi ekrana getir
+  tray.on('click', () => {
+    if (mainWindow) {
+      if (mainWindow.isVisible()) {
+        mainWindow.focus();
+      } else {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    }
+  });
+
+  tray.on('double-click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+
+/**
  * Ana BrowserWindow penceresini oluşturur.
  *
  * @param {string} targetUrl - Yüklenecek web adresi
  */
 function createMainWindow(targetUrl) {
+  const iconPath = path.join(__dirname, 'assets', 'icon.ico');
+  const windowIcon = nativeImage.createFromPath(iconPath);
+
   mainWindow = new BrowserWindow({
     width: 1360,
     height: 860,
     minWidth: 1024,
     minHeight: 640,
     backgroundColor: '#050e18',
-    icon: path.join(__dirname, 'assets', 'icon.ico'),
+    icon: windowIcon,
     autoHideMenuBar: true,
     title: 'MyLoL – Alt-Account Dashboard',
     titleBarStyle: 'hidden',
@@ -210,6 +276,15 @@ function createMainWindow(targetUrl) {
       sandbox: false,
     },
     show: false,
+  });
+
+  // Kapatma butonuna basıldığında uygulamayı kapatmak yerine sistem tepsisine gizle
+  mainWindow.on('close', (event) => {
+    if (!isQuiting) {
+      event.preventDefault();
+      mainWindow.hide();
+      return false;
+    }
   });
 
   // Tarayıcı sağ tık menüsünü engelle (Native masaüstü hissiyatı)
@@ -259,6 +334,15 @@ function cleanup() {
       console.error('[Electron] Sunucu kapatma hatası:', err);
     }
   }
+
+  if (tray) {
+    try {
+      tray.destroy();
+      tray = null;
+    } catch (err) {
+      // Ignore
+    }
+  }
 }
 
 // Uygulama yaşam döngüsü yöneticileri
@@ -266,6 +350,8 @@ app.whenReady().then(async () => {
   loadEnvironmentVariables();
 
   ipcMain.handle('ping', () => 'pong');
+
+  createSystemTray();
 
   let appUrl = 'http://localhost:3000';
 
@@ -284,7 +370,6 @@ app.whenReady().then(async () => {
       await waitForServer(appUrl, 30000);
     } catch (err) {
       console.error('[Electron] Başlatma hatası:', err);
-      // Hata durumunda bilgilendirme penceresi aç
       const errWindow = new BrowserWindow({ width: 500, height: 300, autoHideMenuBar: true });
       errWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
         <body style="font-family: sans-serif; background: #111; color: #fff; padding: 20px;">
@@ -300,16 +385,20 @@ app.whenReady().then(async () => {
   createMainWindow(appUrl);
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+    if (mainWindow) {
+      mainWindow.show();
+    } else {
       createMainWindow(appUrl);
     }
   });
 });
 
-app.on('before-quit', cleanup);
-app.on('window-all-closed', () => {
+app.on('before-quit', () => {
+  isQuiting = true;
   cleanup();
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+});
+
+app.on('window-all-closed', () => {
+  // macOS dışındaki sistemlerde de pencere kapandığında uygulama kapanmasın (Tepside çalışmaya devam eder)
+  // Tam çıkış sadece Tray menüsündeki "Çıkış" ile yapılır.
 });
