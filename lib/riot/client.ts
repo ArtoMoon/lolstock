@@ -119,7 +119,7 @@ export async function riotFetch<T>(url: string): Promise<T> {
   if (!response.ok) {
     if (response.status === 401) {
       throw new Error(
-        `Riot API Anahtarının (RIOT_API_KEY) süresi dolmuş veya geçersiz! Lütfen developer.riotgames.com adresinden yeni bir API Key alıp .env.local dosyasına ekleyin. (HTTP 401: Unauthorized)`
+        `Riot API Anahtarının süresi dolmuş veya geçersiz! Lütfen arayüzdeki "API Key & Ayarlar" menüsünden yeni bir anahtar kaydedin. (HTTP 401: Unauthorized)`
       );
     }
     if (response.status === 403) {

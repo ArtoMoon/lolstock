@@ -3,28 +3,25 @@
 /**
  * Dinamik Sistem Ayarları ve Riot API Anahtarı Server Actions.
  *
- * API anahtarını veritabanında saklar, doğrular ve çalışma zamanında
- * dinamik olarak günceller.
+ * API anahtarını doğrudan veritabanında saklar, doğrular ve çalışma zamanında
+ * dinamik olarak günceller. .env dosyasından çekilmez veya oraya yazılmaz.
  *
  * @module app/actions/settings
  */
 
-import fs from 'fs';
-import path from 'path';
 import dbConnect from '@/lib/db/mongoose';
 import Setting from '@/models/Setting';
-
-const ENV_LOCAL_PATH = path.join(process.cwd(), '.env.local');
 
 export interface ApiKeyStatus {
   hasKey: boolean;
   maskedKey: string;
-  source: 'database' | 'environment' | 'none';
+  source: 'database' | 'none';
   updatedAt?: Date;
 }
 
 /**
- * Aktif Riot API anahtarını döner (Dahili kullanım).
+ * Aktif Riot API anahtarını sadece veritabanından döner.
+ * .env dosyasından kesinlikle okunmaz.
  */
 export async function getActiveApiKey(): Promise<string> {
   try {
@@ -34,38 +31,32 @@ export async function getActiveApiKey(): Promise<string> {
       return doc.value.trim();
     }
   } catch (err) {
-    console.warn('[Settings] DB API Key okunamadı, environment fallback kullanılıyor:', err);
+    console.error('[Settings] API Key veritabanından okunamadı:', err);
   }
 
-  return (process.env.RIOT_API_KEY ?? '').trim();
+  return '';
 }
 
 /**
- * Mevcut API Key durumunu döner.
+ * Mevcut API Key durumunu döner (Yalnızca veritabanı kontrol edilir).
  */
 export async function getApiKeyStatus(): Promise<ApiKeyStatus> {
-  await dbConnect();
-  const doc = await Setting.findOne({ key: 'RIOT_API_KEY' }).lean<{ value: string; updatedAt: Date } | null>();
+  try {
+    await dbConnect();
+    const doc = await Setting.findOne({ key: 'RIOT_API_KEY' }).lean<{ value: string; updatedAt: Date } | null>();
 
-  if (doc?.value && doc.value.trim().length > 5) {
-    const val = doc.value.trim();
-    const masked = `${val.slice(0, 9)}...${val.slice(-4)}`;
-    return {
-      hasKey: true,
-      maskedKey: masked,
-      source: 'database',
-      updatedAt: doc.updatedAt,
-    };
-  }
-
-  const envKey = (process.env.RIOT_API_KEY ?? '').trim();
-  if (envKey.length > 5) {
-    const masked = `${envKey.slice(0, 9)}...${envKey.slice(-4)}`;
-    return {
-      hasKey: true,
-      maskedKey: masked,
-      source: 'environment',
-    };
+    if (doc?.value && doc.value.trim().length > 5) {
+      const val = doc.value.trim();
+      const masked = `${val.slice(0, 9)}...${val.slice(-4)}`;
+      return {
+        hasKey: true,
+        maskedKey: masked,
+        source: 'database',
+        updatedAt: doc.updatedAt,
+      };
+    }
+  } catch (err) {
+    console.error('[Settings] API Key durumu alınamadı:', err);
   }
 
   return {
@@ -122,7 +113,8 @@ export async function verifyApiKey(keyToTest: string): Promise<{ valid: boolean;
 }
 
 /**
- * Yeni Riot API anahtarını veritabanına, runtime belleğe ve .env.local dosyasına kaydeder.
+ * Yeni Riot API anahtarını sadece veritabanına kaydeder.
+ * .env dosyasına dokunulmaz.
  */
 export async function saveApiKey(newKey: string): Promise<{ success: boolean; error?: string }> {
   const cleanKey = newKey.trim();
@@ -144,31 +136,13 @@ export async function saveApiKey(newKey: string): Promise<{ success: boolean; er
   }
 
   try {
-    // 2. Veritabanına kaydet
+    // 2. Sadece veritabanına kaydet
     await dbConnect();
     await Setting.findOneAndUpdate(
       { key: 'RIOT_API_KEY' },
       { value: cleanKey },
       { upsert: true, new: true }
     );
-
-    // 3. Çalışma zamanı değişkenine aktar
-    process.env.RIOT_API_KEY = cleanKey;
-
-    // 4. Varsa .env.local dosyasını güncelle
-    if (fs.existsSync(ENV_LOCAL_PATH)) {
-      try {
-        let content = fs.readFileSync(ENV_LOCAL_PATH, 'utf8');
-        if (content.includes('RIOT_API_KEY=')) {
-          content = content.replace(/RIOT_API_KEY=.*/g, `RIOT_API_KEY=${cleanKey}`);
-        } else {
-          content += `\nRIOT_API_KEY=${cleanKey}\n`;
-        }
-        fs.writeFileSync(ENV_LOCAL_PATH, content, 'utf8');
-      } catch (e) {
-        console.warn('[Settings] .env.local güncellenemedi:', e);
-      }
-    }
 
     return { success: true };
   } catch (err: unknown) {

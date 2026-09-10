@@ -11,7 +11,7 @@ import mongoose from 'mongoose';
  * @module lib/db/mongoose
  */
 
-const MONGODB_URI = process.env.MONGODB_URI ?? '';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mylol';
 
 /** Shared cached connection state across hot reloads */
 interface MongooseCache {
@@ -44,13 +44,6 @@ if (!global._mongooseCache) {
  * await dbConnect();
  */
 export default async function dbConnect(): Promise<typeof mongoose> {
-  if (!MONGODB_URI) {
-    throw new Error(
-      'MONGODB_URI environment variable is not defined. ' +
-        'Add it to .env.local before starting the server.'
-    );
-  }
-
   if (cache.conn) {
     return cache.conn;
   }

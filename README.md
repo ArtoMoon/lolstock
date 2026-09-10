@@ -56,12 +56,12 @@ cd lolstock
 yarn install
 ```
 
-### 3. Configure Environment Variables
-Create a `.env.local` file in the root directory:
+### 3. Database (Optional Configuration)
+By default, the application connects to local MongoDB at `mongodb://localhost:27017/mylol`. If you want to use a custom MongoDB Atlas or remote URI, create a `.env.local`:
 ```env
 MONGODB_URI=mongodb://localhost:27017/
-RIOT_API_KEY=RGAPI-your-riot-api-key-here
 ```
+*(No `RIOT_API_KEY` needed in `.env.local` — configure and test it directly inside the app on first launch or via **API Key & Ayarlar** in the navbar).*
 
 ---
 
