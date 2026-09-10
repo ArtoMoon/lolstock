@@ -1,7 +1,7 @@
 # ⚔️ MyLoL – League of Legends Alt-Account Manager & Desktop Client
 
 <p align="center">
-  <img src="https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/588.png" width="96" height="96" alt="MyLoL Logo" style="border-radius: 20px; box-shadow: 0 0 20px rgba(234, 179, 8, 0.4);" />
+  <img src="public/icon.png" width="128" height="128" alt="MyLoL Logo" style="border-radius: 24px; box-shadow: 0 0 30px rgba(61, 155, 233, 0.5);" />
 </p>
 
 <p align="center">

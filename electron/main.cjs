@@ -194,6 +194,7 @@ function createMainWindow(targetUrl) {
     minWidth: 1024,
     minHeight: 640,
     backgroundColor: '#050e18',
+    icon: path.join(__dirname, 'assets', 'icon.ico'),
     autoHideMenuBar: true,
     title: 'MyLoL – Alt-Account Dashboard',
     titleBarStyle: 'hidden',

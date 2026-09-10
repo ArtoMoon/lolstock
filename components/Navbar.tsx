@@ -18,8 +18,8 @@ export default function Navbar() {
             href="/" 
             className="flex items-center gap-2.5 transition-opacity hover:opacity-85 no-drag-region"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-yellow-500/20 to-amber-600/10 border border-yellow-500/40 flex items-center justify-center text-sm shadow-[0_0_12px_rgba(234,179,8,0.2)]">
-              ⚔️
+            <div className="w-8 h-8 rounded-lg overflow-hidden border border-yellow-500/40 shadow-[0_0_12px_rgba(234,179,8,0.3)] shrink-0 bg-[#050e18]">
+              <img src="/icon.png" alt="MyLoL Logo" className="w-full h-full object-cover" />
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-base font-black tracking-wider text-white">

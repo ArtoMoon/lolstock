@@ -52,6 +52,7 @@
     ],
     "asar": false,
     "win": {
+      "icon": "electron/assets/icon.ico",
       "target": [
         "nsis",
         "portable"

@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   description:
     'League of Legends hesaplarınızı Riot API ile gerçek zamanlı takip edin. Level, rank ve aktivite durumunu izleyin.',
   keywords: ['League of Legends', 'LoL hesap', 'kişisel dashboard', 'Riot API', 'rank takip'],
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
