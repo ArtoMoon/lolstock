@@ -1,10 +1,12 @@
+
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
 async function getGitToken() {
   try {
-    const stdout = execSync('echo protocol=https\nhost=github.com | git credential fill', {
+    const stdout = execSync('git credential fill', {
+      input: 'protocol=https\nhost=github.com\n\n',
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'ignore'],
     });
