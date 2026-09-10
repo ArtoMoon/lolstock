@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { LanguageProvider } from '@/lib/i18n/LanguageContext';
 import Navbar from '@/components/Navbar';
+import OnboardingModal from '@/components/OnboardingModal';
 import './globals.css';
 
 const inter = Inter({
@@ -26,8 +28,11 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="tr" className={inter.variable}>
       <body>
-        <Navbar />
-        <main>{children}</main>
+        <LanguageProvider>
+          <Navbar />
+          <main>{children}</main>
+          <OnboardingModal />
+        </LanguageProvider>
       </body>
     </html>
   );

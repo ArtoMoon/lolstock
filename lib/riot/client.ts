@@ -12,7 +12,7 @@
  * @module lib/riot/client
  */
 
-const RIOT_API_KEY = process.env.RIOT_API_KEY ?? '';
+import { getActiveApiKey } from '@/app/actions/settings';
 
 /** Desteklenen Riot platform bölgeleri */
 export type RiotPlatform =
@@ -59,6 +59,7 @@ export function getRegionForPlatform(platform: RiotPlatform): RiotRegion {
 /**
  * Riot API'ye GET isteği gönderir.
  *
+ * - Dinamik veritabanı/runtime API anahtarını kullanır.
  * - `X-App-Rate-Limit-Count` başlığını kontrol eder.
  * - HTTP 429 durumunda `Retry-After` süresince bekler ve tekrar dener.
  * - Başarısız isteklerde açıklayıcı hata fırlatır.
@@ -66,21 +67,18 @@ export function getRegionForPlatform(platform: RiotPlatform): RiotRegion {
  * @param {string} url - Tam Riot API URL'si
  * @returns {Promise<T>} Ayrıştırılmış JSON yanıtı
  * @throws {Error} HTTP hatası veya ağ hatası durumunda
- *
- * @example
- * const data = await riotFetch<SummonerDto>(
- *   'https://tr1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/...'
- * );
  */
 export async function riotFetch<T>(url: string): Promise<T> {
-  if (!RIOT_API_KEY) {
+  const apiKey = await getActiveApiKey();
+
+  if (!apiKey) {
     throw new Error(
-      'RIOT_API_KEY environment variable is not defined. Add it to .env.local.'
+      'Riot API Anahtarı bulunamadı! Lütfen üst bardaki "API Key & Ayarlar" menüsünden veya developer.riotgames.com adresinden yeni bir anahtar girin.'
     );
   }
 
   const headers = {
-    'X-Riot-Token': RIOT_API_KEY,
+    'X-Riot-Token': apiKey,
     Accept: 'application/json',
   };
 

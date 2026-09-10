@@ -12,6 +12,7 @@ import PlatformBadge from '@/components/PlatformBadge';
 import RiotIdDisplay from '@/components/RiotIdDisplay';
 import { ddragon } from '@/lib/riot/ddragon';
 import Image from 'next/image';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface AccountDetailClientProps {
   account: AccountData;
@@ -26,6 +27,7 @@ function calculateWinRate(wins: number, losses: number) {
 export default function AccountDetailClient({
   account: initialAccount
 }: AccountDetailClientProps) {
+  const { t, language } = useLanguage();
   const router = useRouter();
   const [account, setAccount] = useState<AccountData>(initialAccount);
   const [notes, setNotes] = useState(initialAccount.notes ?? '');
@@ -81,12 +83,12 @@ export default function AccountDetailClient({
     startTransition(async () => {
       const res = await updateAccountStatus(account._id, newStatus);
       if (res.success) {
-        setStatusMsg('✅ Durum güncellendi');
+        setStatusMsg(`✅ ${t('status_updated')}`);
         setTimeout(() => setStatusMsg(null), 3000);
         router.refresh();
       } else {
         setAccount((prev) => ({ ...prev, status: oldStatus }));
-        setStatusMsg('❌ Hata: ' + (res.error || 'Güncellenemedi'));
+        setStatusMsg('❌ ' + (res.error || 'Failed'));
       }
     });
   }
@@ -202,11 +204,11 @@ export default function AccountDetailClient({
   }
 
   const lastChecked = account.lastCheckedAt
-    ? new Date(account.lastCheckedAt).toLocaleString('tr-TR')
-    : 'Hiç kontrol edilmedi';
+    ? new Date(account.lastCheckedAt).toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US')
+    : t('never');
 
   const createdAt = account.createdAt
-    ? new Date(account.createdAt).toLocaleDateString('tr-TR')
+    ? new Date(account.createdAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')
     : '–';
 
   // Son X Maç Özeti
@@ -376,23 +378,23 @@ export default function AccountDetailClient({
 
             <div className="mt-6 pt-4 border-t border-white/5 text-sm flex flex-col gap-3">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400 font-medium">Hesap Durumu:</span>
+                <span className="text-slate-400 font-medium">{t('status_select_label')}:</span>
                 <select
                   className="bg-[#0f1923] border border-blue-500/30 hover:border-blue-400 rounded-lg px-2.5 py-1 text-xs text-[#e8f0fe] cursor-pointer outline-none transition-colors font-medium"
                   value={account.status}
                   onChange={(e) => handleStatusChange(e.target.value as AccountStatus)}
                   disabled={isPending}
                 >
-                  <option value="available" className="bg-[#0f1923]">✅ Mevcut</option>
-                  <option value="archived" className="bg-[#0f1923]">📁 Arşivlendi</option>
-                  <option value="active" className="bg-[#0f1923]">🎮 Aktif</option>
-                  <option value="level" className="bg-[#0f1923]">⚡ Level</option>
-                  <option value="error_checking" className="bg-[#0f1923]">🚫 Ban</option>
+                  <option value="available" className="bg-[#0f1923]">✅ {t('status_available')}</option>
+                  <option value="archived" className="bg-[#0f1923]">📁 {t('status_archived')}</option>
+                  <option value="active" className="bg-[#0f1923]">🎮 {t('status_active')}</option>
+                  <option value="level" className="bg-[#0f1923]">⚡ {t('status_level')}</option>
+                  <option value="error_checking" className="bg-[#0f1923]">🚫 {t('status_error_checking')}</option>
                 </select>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-slate-400 font-medium">Sunucu / Bölge:</span>
+                <span className="text-slate-400 font-medium">{t('th_region')}:</span>
                 <select
                   className="bg-[#0f1923] border border-blue-500/30 hover:border-blue-400 rounded-lg px-2.5 py-1 text-xs text-[#e8f0fe] cursor-pointer outline-none transition-colors font-medium"
                   value={(account.platform || 'TR1').toUpperCase()}
@@ -409,7 +411,7 @@ export default function AccountDetailClient({
                 </select>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Son Kontrol:</span>
+                <span className="text-slate-400">{t('th_last_checked')}:</span>
                 <span className="text-white font-medium">{lastChecked}</span>
               </div>
             </div>
@@ -431,7 +433,7 @@ export default function AccountDetailClient({
               onClick={handleCheck}
               disabled={isPending || isSyncingMatches}
             >
-              {isPending ? '⏳ Tam Senkronizasyon Yapılıyor...' : '🔄 Tam Senkronizasyon (API)'}
+              {isPending ? '⏳ ...' : `🔄 ${t('sync_btn')} (API)`}
             </button>
             {checkMsg && <p className="text-xs text-center mt-2 text-slate-300">{checkMsg}</p>}
           </div>
@@ -446,7 +448,7 @@ export default function AccountDetailClient({
               <RankBadge rank={ranks.solo?.formattedRank || account.rank || 'UNRANKED'} size={64} />
             </div>
             <div className="flex-1">
-              <p className="text-xs text-slate-400 font-semibold mb-1">Ranked Solo</p>
+              <p className="text-xs text-slate-400 font-semibold mb-1">{t('solo_duo')}</p>
               {ranks.solo ? (
                 <>
                   <p className="text-lg font-bold text-white leading-none">{ranks.solo.formattedRank}</p>
@@ -462,7 +464,7 @@ export default function AccountDetailClient({
                   <p className="text-[0.65rem] text-amber-500/80 mt-1 uppercase tracking-wider font-semibold">Geçmiş Sezon / Kayıtlı</p>
                 </>
               ) : (
-                <p className="text-sm font-bold text-slate-500">Unranked</p>
+                <p className="text-sm font-bold text-slate-500">{t('unranked')}</p>
               )}
             </div>
           </div>
@@ -473,7 +475,7 @@ export default function AccountDetailClient({
               <RankBadge rank={ranks.flex?.formattedRank || 'UNRANKED'} size={48} />
             </div>
             <div className="flex-1">
-              <p className="text-xs text-slate-400 font-semibold mb-1">Ranked Flex</p>
+              <p className="text-xs text-slate-400 font-semibold mb-1">{t('flex')}</p>
               {ranks.flex ? (
                 <>
                   <p className="text-sm font-bold text-white leading-none">{ranks.flex.formattedRank}</p>
@@ -484,7 +486,7 @@ export default function AccountDetailClient({
                   </p>
                 </>
               ) : (
-                <p className="text-sm font-bold text-slate-500">Unranked</p>
+                <p className="text-sm font-bold text-slate-500">{t('unranked')}</p>
               )}
             </div>
           </div>
@@ -511,7 +513,7 @@ export default function AccountDetailClient({
               onClick={handleSaveNotes}
               disabled={isPending}
             >
-              Kaydet
+              {t('save')}
             </button>
           </div>
         </div>
@@ -634,7 +636,7 @@ export default function AccountDetailClient({
                 {/* Sonuç & Süre */}
                 <div className="w-20 flex flex-col items-center sm:items-start text-center sm:text-left shrink-0">
                   <span className={`text-sm font-bold ${match.win ? 'text-blue-400' : 'text-red-400'}`}>
-                    {match.win ? 'Victory' : 'Defeat'}
+                    {match.win ? t('victory') : t('defeat')}
                   </span>
                   <span className="text-xs text-slate-500 mt-0.5">
                     {Math.floor(match.gameDuration / 60)}m {match.gameDuration % 60}s

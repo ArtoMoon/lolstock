@@ -6,12 +6,14 @@ import type { AccountStatus } from '@/models/Account';
 import AccountTable from '@/components/AccountTable';
 import AddAccountForm from '@/components/AddAccountForm';
 import AccountSyncButton from '@/components/AccountSyncButton';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface DashboardViewProps {
   accounts: AccountData[];
 }
 
 export default function DashboardView({ accounts }: DashboardViewProps) {
+  const { t } = useLanguage();
   const [statusFilter, setStatusFilter] = useState<AccountStatus | ''>('');
   const [platformFilter, setPlatformFilter] = useState<string>('');
 
@@ -39,7 +41,7 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               ? 'bg-slate-800/90 border-2 border-blue-400/60 shadow-[0_0_20px_rgba(59,130,246,0.25)] -translate-y-1'
               : 'bg-slate-900/60 border border-slate-700/50 hover:-translate-y-1 hover:bg-slate-800/80 hover:border-slate-600'
           }`}
-          title="Tüm durumları göster"
+          title={t('stat_total')}
         >
           <div className="text-2xl sm:text-3xl flex items-center justify-center w-12 h-12 bg-black/25 rounded-xl shrink-0">
             🗂️
@@ -49,10 +51,10 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               {total}
             </span>
             <span className="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold truncate">
-              Toplam
+              {t('stat_total')}
             </span>
             {statusFilter === '' && (
-              <span className="text-[10px] text-blue-400 font-medium mt-0.5">● Tümü Seçili</span>
+              <span className="text-[10px] text-blue-400 font-medium mt-0.5">{t('all_selected')}</span>
             )}
           </div>
         </button>
@@ -66,7 +68,7 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               ? 'bg-emerald-950/40 border-2 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.35)] -translate-y-1'
               : 'bg-slate-900/60 border border-green-500/30 hover:-translate-y-1 hover:bg-slate-800/80 hover:border-green-400/60'
           }`}
-          title="Sadece mevcut hesapları filtrele"
+          title={t('stat_available')}
         >
           <div className="text-2xl sm:text-3xl flex items-center justify-center w-12 h-12 bg-black/25 rounded-xl shrink-0">
             ✅
@@ -76,12 +78,12 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               {available}
             </span>
             <span className="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold truncate">
-              Mevcut
+              {t('stat_available')}
             </span>
             {statusFilter === 'available' ? (
-              <span className="text-[10px] text-emerald-400 font-bold mt-0.5">✓ Filtreleniyor</span>
+              <span className="text-[10px] text-emerald-400 font-bold mt-0.5">{t('filtering')}</span>
             ) : (
-              <span className="text-[10px] text-slate-500 group-hover:text-slate-400 mt-0.5">Filtrele</span>
+              <span className="text-[10px] text-slate-500 group-hover:text-slate-400 mt-0.5">{t('filter_action')}</span>
             )}
           </div>
         </button>
@@ -95,7 +97,7 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               ? 'bg-rose-950/40 border-2 border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.35)] -translate-y-1'
               : 'bg-slate-900/60 border border-red-500/30 hover:-translate-y-1 hover:bg-slate-800/80 hover:border-red-400/60'
           }`}
-          title="Sadece arşivlenen hesapları filtrele"
+          title={t('stat_archived')}
         >
           <div className="text-2xl sm:text-3xl flex items-center justify-center w-12 h-12 bg-black/25 rounded-xl shrink-0">
             💸
@@ -105,12 +107,12 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               {archived}
             </span>
             <span className="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold truncate">
-              Arşivlendi
+              {t('stat_archived')}
             </span>
             {statusFilter === 'archived' ? (
-              <span className="text-[10px] text-rose-400 font-bold mt-0.5">✓ Filtreleniyor</span>
+              <span className="text-[10px] text-rose-400 font-bold mt-0.5">{t('filtering')}</span>
             ) : (
-              <span className="text-[10px] text-slate-500 mt-0.5">Filtrele</span>
+              <span className="text-[10px] text-slate-500 mt-0.5">{t('filter_action')}</span>
             )}
           </div>
         </button>
@@ -124,7 +126,7 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               ? 'bg-blue-950/40 border-2 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.35)] -translate-y-1'
               : 'bg-slate-900/60 border border-blue-500/30 hover:-translate-y-1 hover:bg-slate-800/80 hover:border-blue-400/60'
           }`}
-          title="Sadece aktif (oynanan) hesapları filtrele"
+          title={t('stat_active')}
         >
           <div className="text-2xl sm:text-3xl flex items-center justify-center w-12 h-12 bg-black/25 rounded-xl shrink-0">
             🎮
@@ -134,12 +136,12 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               {active}
             </span>
             <span className="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold truncate">
-              Aktif
+              {t('stat_active')}
             </span>
             {statusFilter === 'active' ? (
-              <span className="text-[10px] text-blue-400 font-bold mt-0.5">✓ Filtreleniyor</span>
+              <span className="text-[10px] text-blue-400 font-bold mt-0.5">{t('filtering')}</span>
             ) : (
-              <span className="text-[10px] text-slate-500 mt-0.5">Filtrele</span>
+              <span className="text-[10px] text-slate-500 mt-0.5">{t('filter_action')}</span>
             )}
           </div>
         </button>
@@ -153,7 +155,7 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               ? 'bg-purple-950/50 border-2 border-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.45)] -translate-y-1'
               : 'bg-slate-900/60 border border-purple-500/30 hover:-translate-y-1 hover:bg-slate-800/80 hover:border-purple-400/60'
           }`}
-          title="Sadece 'Level' tagına sahip hesapları filtrele"
+          title={t('stat_level')}
         >
           <div className="text-2xl sm:text-3xl flex items-center justify-center w-12 h-12 bg-purple-950/60 border border-purple-500/30 rounded-xl shrink-0">
             ⚡
@@ -163,12 +165,12 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               {levelCount}
             </span>
             <span className="text-xs text-purple-300 uppercase tracking-wider mt-1 font-semibold truncate flex items-center gap-1">
-              Level
+              {t('stat_level')}
             </span>
             {statusFilter === 'level' ? (
-              <span className="text-[10px] text-purple-300 font-bold mt-0.5">✓ Filtreleniyor</span>
+              <span className="text-[10px] text-purple-300 font-bold mt-0.5">{t('filtering')}</span>
             ) : (
-              <span className="text-[10px] text-slate-500 mt-0.5">Filtrele</span>
+              <span className="text-[10px] text-slate-500 mt-0.5">{t('filter_action')}</span>
             )}
           </div>
         </button>
@@ -182,7 +184,7 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               ? 'bg-rose-950/40 border-2 border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.35)] -translate-y-1'
               : 'bg-slate-900/60 border border-rose-500/30 hover:-translate-y-1 hover:bg-slate-800/80 hover:border-rose-400/60'
           }`}
-          title="Sadece kontrol hatası/ban olan hesapları filtrele"
+          title={t('stat_banned')}
         >
           <div className="text-2xl sm:text-3xl flex items-center justify-center w-12 h-12 bg-black/25 rounded-xl shrink-0">
             🚫
@@ -192,12 +194,12 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
               {errored}
             </span>
             <span className="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold truncate">
-              Ban
+              {t('stat_banned')}
             </span>
             {statusFilter === 'error_checking' ? (
-              <span className="text-[10px] text-rose-400 font-bold mt-0.5">✓ Filtreleniyor</span>
+              <span className="text-[10px] text-rose-400 font-bold mt-0.5">{t('filtering')}</span>
             ) : (
-              <span className="text-[10px] text-slate-500 mt-0.5">Filtrele</span>
+              <span className="text-[10px] text-slate-500 mt-0.5">{t('filter_action')}</span>
             )}
           </div>
         </button>
@@ -207,13 +209,13 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-10 bg-[#070e1a]/80 p-6 md:p-8 rounded-2xl border border-white/5 shadow-lg backdrop-blur-md">
         <div className="flex flex-col gap-3 flex-1 w-full">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <span>➕</span> Hesap Ekle
+            <span>➕</span> {t('modal_add_title')}
           </p>
           <AddAccountForm />
         </div>
         <div className="flex flex-col gap-3 w-full md:w-auto">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <span>⚡</span> Toplu İşlem
+            <span>⚡</span> {t('sync_btn')}
           </p>
           <AccountSyncButton />
         </div>
@@ -221,31 +223,6 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
 
       {/* ── HESAP LİSTESİ BÖLÜMÜ ── */}
       <div className="mt-0">
-        <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-white tracking-tight">Hesaplar</h2>
-            <span className="bg-white/10 px-3 py-1 rounded-full text-xs font-semibold text-slate-300">
-              {total} kayıt
-            </span>
-          </div>
-
-          {statusFilter && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-400">Filtrelenen Durum:</span>
-              <span className="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-200 border border-purple-500/30 font-semibold uppercase">
-                {statusFilter}
-              </span>
-              <button
-                onClick={() => setStatusFilter('')}
-                className="text-slate-400 hover:text-white cursor-pointer px-1 py-0.5"
-                title="Filtreyi Kaldır"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-        </div>
-
         <AccountTable
           accounts={accounts}
           statusFilter={statusFilter}

@@ -9,6 +9,7 @@ import RankBadge from './RankBadge';
 import PlatformBadge, { FlagTR, FlagEU, FlagUS } from './PlatformBadge';
 import RiotIdDisplay from './RiotIdDisplay';
 import Link from 'next/link';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export interface AccountTableProps {
   accounts: AccountData[];
@@ -41,6 +42,7 @@ export default function AccountTable({
   platformFilter: controlledPlatform,
   onPlatformFilterChange,
 }: AccountTableProps) {
+  const { t } = useLanguage();
   const [internalStatus, setInternalStatus] = useState<AccountStatus | ''>('');
   const [internalPlatform, setInternalPlatform] = useState('');
   const [search, setSearch] = useState('');
@@ -192,7 +194,7 @@ export default function AccountTable({
                 : 'bg-[#0e192d]/80 text-slate-400 border border-white/5 hover:border-white/20 hover:text-white'
             }`}
           >
-            <span>🗂️ Tüm Durumlar</span>
+            <span>🗂️ {t('tag_all')}</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-white font-mono">
               {totalCount}
             </span>
@@ -209,7 +211,7 @@ export default function AccountTable({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_6px_rgba(168,85,247,0.8)]" />
-            <span>⚡ Level</span>
+            <span>⚡ {t('status_level')}</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                 statusFilter === 'level' ? 'bg-purple-500/40 text-purple-100 font-bold' : 'bg-purple-500/20 text-purple-300'
@@ -225,12 +227,12 @@ export default function AccountTable({
             onClick={() => setStatusFilter(statusFilter === 'available' ? '' : 'available')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
               statusFilter === 'available'
-                ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.4)] ring-1 ring-emerald-400/50'
+                ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-500/60 shadow-[0_0_15px_rgba(168,85,247,0.4)] ring-1 ring-emerald-400/50'
                 : 'bg-[#0e192d]/80 text-emerald-300/80 border border-emerald-500/20 hover:border-emerald-500/50 hover:text-emerald-200 hover:bg-emerald-500/10'
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
-            <span>✅ Mevcut</span>
+            <span>✅ {t('status_available')}</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                 statusFilter === 'available' ? 'bg-emerald-500/40 text-emerald-100 font-bold' : 'bg-emerald-500/20 text-emerald-300'
@@ -251,7 +253,7 @@ export default function AccountTable({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
-            <span>📁 Arşivlendi</span>
+            <span>📁 {t('status_archived')}</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                 statusFilter === 'archived' ? 'bg-rose-500/40 text-rose-100 font-bold' : 'bg-rose-500/20 text-rose-300'
@@ -272,7 +274,7 @@ export default function AccountTable({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(59,130,246,0.8)]" />
-            <span>🎮 Aktif</span>
+            <span>🎮 {t('status_active')}</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                 statusFilter === 'active' ? 'bg-blue-500/40 text-blue-100 font-bold' : 'bg-blue-500/20 text-blue-300'
@@ -293,7 +295,7 @@ export default function AccountTable({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]" />
-            <span>🚫 Ban</span>
+            <span>🚫 {t('status_error_checking')}</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                 statusFilter === 'error_checking' ? 'bg-amber-500/40 text-amber-100 font-bold' : 'bg-amber-500/20 text-amber-300'
@@ -318,7 +320,7 @@ export default function AccountTable({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Tüm Bölgeler
+            {t('all_regions')}
           </button>
 
           <button
@@ -416,7 +418,7 @@ export default function AccountTable({
 
         {/* Sıralama Seçici */}
         <div className="flex items-center gap-1.5 ml-auto">
-          <span className="text-xs text-slate-500">Sırala:</span>
+          <span className="text-xs text-slate-500">{t('sort_by')}</span>
           <select
             id="sort-by"
             aria-label="Hesapları sırala"
@@ -424,10 +426,10 @@ export default function AccountTable({
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
           >
-            <option value="lastChecked" className="bg-[#0f1923]">🕒 Son Kontrol (Yeni)</option>
-            <option value="level_desc" className="bg-[#0f1923]">⚡ Seviye (En Yüksek)</option>
-            <option value="level_asc" className="bg-[#0f1923]">⚡ Seviye (En Düşük)</option>
-            <option value="riotId_asc" className="bg-[#0f1923]">🔤 Riot ID (A-Z)</option>
+            <option value="lastChecked" className="bg-[#0f1923]">{t('sort_last_checked')}</option>
+            <option value="level_desc" className="bg-[#0f1923]">{t('sort_level_desc')}</option>
+            <option value="level_asc" className="bg-[#0f1923]">{t('sort_level_asc')}</option>
+            <option value="riotId_asc" className="bg-[#0f1923]">{t('sort_riot_id')}</option>
           </select>
         </div>
       </div>
@@ -439,7 +441,7 @@ export default function AccountTable({
           <input
             id="search-accounts"
             type="text"
-            placeholder="🔍 Riot ID, Sunucu, Rank veya Durum ('level', 'mevcut', 'arşivlendi' vb.) ara..."
+            placeholder={t('search_placeholder')}
             className="w-full bg-[#0a1322]/90 border border-white/10 rounded-xl px-4 py-2.5 text-[#e8f0fe] font-sans text-sm outline-none transition-colors focus:border-blue-400 placeholder:text-slate-500 pr-10"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -548,7 +550,7 @@ export default function AccountTable({
             onClick={clearAllFilters}
             className="ml-auto text-xs text-rose-400 hover:text-rose-300 font-semibold cursor-pointer underline underline-offset-2"
           >
-            Tüm Filtreleri Temizle
+            {t('clear_filters')}
           </button>
         </div>
       )}
@@ -556,9 +558,9 @@ export default function AccountTable({
       {/* Sonuç sayısı */}
       <div className="flex items-center justify-between gap-4 mb-4">
         <p className="text-xs text-slate-400">
-          <strong className="text-white font-mono">{sortedAndFiltered.length}</strong> hesap gösteriliyor
+          <strong className="text-white font-mono">{sortedAndFiltered.length}</strong> {t('accounts_showing')}
           {accounts.length !== sortedAndFiltered.length && (
-            <span> (toplam {accounts.length} hesaptan filtrelendi)</span>
+            <span> ({t('filtered_from').replace('{total}', String(accounts.length))})</span>
           )}
         </p>
       </div>
@@ -567,16 +569,16 @@ export default function AccountTable({
       {sortedAndFiltered.length === 0 ? (
         <div className="text-center py-16 bg-[#0a1322]/85 rounded-2xl border border-white/5 shadow-xl">
           <span className="text-5xl opacity-40 block mb-4">🔍</span>
-          <p className="text-lg font-bold text-white">Seçilen filtrelere uygun hesap bulunamadı.</p>
+          <p className="text-lg font-bold text-white">{t('no_accounts_found')}</p>
           <p className="text-sm text-slate-400 mt-2 max-w-md mx-auto">
-            Farklı bir durum tagı seçebilir veya filtreleri temizleyebilirsiniz.
+            {t('no_accounts_desc')}
           </p>
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
               className="mt-5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-md"
             >
-              Filtreleri Sıfırla
+              {t('reset_filters')}
             </button>
           )}
         </div>
@@ -632,13 +634,13 @@ export default function AccountTable({
               <table className="w-full text-left text-sm text-slate-300">
                 <thead className="text-xs uppercase bg-[#050e18]/90 text-slate-400">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Riot ID</th>
-                    <th className="px-4 py-3 font-semibold">Sunucu</th>
-                    <th className="px-4 py-3 font-semibold">Durum</th>
-                    <th className="px-4 py-3 font-semibold text-center">Seviye</th>
-                    <th className="px-4 py-3 font-semibold">Rank</th>
-                    <th className="px-4 py-3 font-semibold">Son Kontrol</th>
-                    <th className="px-4 py-3 font-semibold text-right">İşlem</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_account')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_region')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_status')}</th>
+                    <th className="px-4 py-3 font-semibold text-center">{t('th_level')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_rank')}</th>
+                    <th className="px-4 py-3 font-semibold">{t('th_last_checked')}</th>
+                    <th className="px-4 py-3 font-semibold text-right">{t('th_actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -650,7 +652,7 @@ export default function AccountTable({
                           <Link
                             href={`/accounts/${account._id}`}
                             className="text-xs text-slate-500 hover:text-blue-400 transition-colors"
-                            title="Detaya Git"
+                            title={t('detail_btn')}
                           >
                             ↗
                           </Link>
@@ -680,14 +682,14 @@ export default function AccountTable({
                               hour: '2-digit',
                               minute: '2-digit',
                             })
-                          : 'Hiç'}
+                          : t('never')}
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         <Link
                           href={`/accounts/${account._id}`}
                           className="text-blue-400 hover:text-blue-300 font-medium text-xs bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg transition-colors inline-block"
                         >
-                          Detay
+                          {t('detail_btn')}
                         </Link>
                       </td>
                     </tr>

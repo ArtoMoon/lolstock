@@ -21,11 +21,14 @@
 
 ## 🌟 Key Features
 
+* 🌐 **Multi-Language Support (i18n):** Instant toggling between Turkish (TR) and English (EN) with persistent language state.
+* 🔑 **In-App Onboarding & Dynamic Riot API Key Setup:** Interactive welcome guide on first run with live API connection test (`RGAPI-...`) and database-backed dynamic key management — no manual `.env.local` editing required.
 * 🔄 **Real-Time Riot API Synchronization:** Live lookup and sync for Summoner Level, Solo/Duo & Flex ranks, LP, and recent match history via modern Riot ID (`GameName#TAG`).
 * 🛡️ **Riot Games ToS & API Policy Compliant:** Purpose-built for personal account management without violating developer guidelines.
 * ⚡ **Smart Rate-Limit Protection:** Built-in sequential batch delay loop (1500ms between accounts) and HTTP 429 backoff handling to prevent rate-limit exceedances.
 * 🖥️ **Native Desktop Client Experience:**
   * Frameless dark Hextech theme with custom window drag region (`drag-region`).
+  * System tray minimization support — keeps running in background when closed.
   * Native window controls integrated directly into the titlebar.
   * Disables standard browser context menus and accidental refresh shortcuts (F5 / Ctrl+R).
   * Custom subtle dark scrollbars.

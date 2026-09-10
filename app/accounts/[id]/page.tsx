@@ -5,6 +5,7 @@ import dbConnect from '@/lib/db/mongoose';
 import Account from '@/models/Account';
 import type { IAccount } from '@/models/Account';
 import type { AccountData } from '@/app/actions/accounts';
+import BackToDashboardLink from '@/components/BackToDashboardLink';
 import AccountDetailClient from './AccountDetailClient';
 
 interface PageProps {
@@ -49,9 +50,7 @@ export default async function AccountDetailPage({ params }: PageProps) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
-      <Link href="/" className="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors mb-6 pb-2 border-b-2 border-transparent hover:border-yellow-500">
-        ← Dashboard'a Dön
-      </Link>
+      <BackToDashboardLink />
 
       <AccountDetailClient account={account} />
     </div>

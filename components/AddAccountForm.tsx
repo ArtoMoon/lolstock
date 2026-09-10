@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { addAccount } from '@/app/actions/accounts';
 import { sanitizeRiotId } from '@/lib/riot/utils';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 const PLATFORMS = [
   { value: 'TR1',  label: '🇹🇷 TR (Türkiye)' },
@@ -21,6 +22,7 @@ const PLATFORMS = [
  * Server Action üzerinden PUUID çeker ve MongoDB'ye kaydeder.
  */
 export default function AddAccountForm() {
+  const { t } = useLanguage();
   const [riotId, setRiotId] = useState('');
   const [username, setUsername] = useState('');
   const [platform, setPlatform] = useState('TR1');
@@ -45,10 +47,10 @@ export default function AddAccountForm() {
       const result = await addAccount(cleaned, platform, cleanedUsername);
       if (result.success) {
         const displayName = result.account?.riotId ?? cleaned;
-        const extra = cleanedUsername ? ` (Kullanıcı Adı: ${cleanedUsername})` : '';
+        const extra = cleanedUsername ? ` (${t('label_username')}: ${cleanedUsername})` : '';
         setMessage({
           type: 'success',
-          text: `✅ "${displayName}"${extra} (${platform}) başarıyla eklendi!`,
+          text: `✅ "${displayName}"${extra} (${platform}) OK!`,
         });
         setRiotId('');
         setUsername('');
@@ -68,7 +70,7 @@ export default function AddAccountForm() {
           value={platform}
           onChange={(e) => setPlatform(e.target.value)}
           disabled={isPending}
-          aria-label="Sunucu bölgesi seç"
+          aria-label={t('label_region')}
         >
           {PLATFORMS.map((p) => (
             <option key={p.value} value={p.value} className="bg-[#0f1923] text-[#e8f0fe]">
@@ -82,12 +84,12 @@ export default function AddAccountForm() {
           id="add-riot-id"
           type="text"
           className="flex-1 min-w-[200px] bg-[#0e192d]/85 border border-[#3d9be9]/18 rounded-lg px-4 py-2.5 text-[#e8f0fe] font-sans text-sm outline-none transition-all focus:border-blue-400 focus:shadow-[0_0_0_3px_rgba(61,155,233,0.12)] placeholder:text-slate-500"
-          placeholder="Riot ID (Örn: Faker#KR1) *"
+          placeholder={t('placeholder_riot_id')}
           value={riotId}
           onChange={(e) => setRiotId(e.target.value)}
           disabled={isPending}
           required
-          aria-label="Riot ID gir"
+          aria-label={t('label_riot_id')}
         />
 
         {/* Kullanıcı Adı (İstemci Giriş Adı) */}
@@ -95,11 +97,11 @@ export default function AddAccountForm() {
           id="add-username"
           type="text"
           className="flex-1 sm:max-w-[210px] bg-[#0e192d]/85 border border-[#3d9be9]/18 rounded-lg px-4 py-2.5 text-[#e8f0fe] font-sans text-sm outline-none transition-all focus:border-blue-400 focus:shadow-[0_0_0_3px_rgba(61,155,233,0.12)] placeholder:text-slate-500"
-          placeholder="Kullanıcı Adı (opsiyonel)"
+          placeholder={t('placeholder_username')}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           disabled={isPending}
-          aria-label="Kullanıcı adı gir"
+          aria-label={t('label_username')}
         />
 
         <button
@@ -108,7 +110,7 @@ export default function AddAccountForm() {
           className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-sans text-sm font-semibold cursor-pointer border-none transition-all whitespace-nowrap bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#050e18] shadow-[0_2px_12px_rgba(200,168,75,0.3)] hover:from-yellow-300 hover:to-yellow-500 hover:-translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isPending || !riotId.trim()}
         >
-          {isPending ? '⏳ Ekleniyor...' : '➕ Ekle'}
+          {isPending ? `⏳ ${t('adding')}` : `➕ ${t('save')}`}
         </button>
       </div>
 
