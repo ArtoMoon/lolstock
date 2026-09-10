@@ -1,6 +1,6 @@
 {
   "name": "mylol",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MyLoL League of Legends Alt-Account Dashboard",
   "author": "MyLoL",
   "main": "electron/main.cjs",
@@ -13,7 +13,9 @@
     "electron:build": "yarn build && electron-builder --win",
     "electron:build:setup": "yarn build && electron-builder --win nsis",
     "electron:build:portable": "yarn build && electron-builder --win portable",
-    "electron:build:dir": "yarn build && electron-builder --dir"
+    "electron:build:dir": "yarn build && electron-builder --dir",
+    "release": "node scripts/publish-release.mjs",
+    "release:all": "yarn electron:build:setup && node scripts/publish-release.mjs"
   },
   "dependencies": {
     "mongoose": "^9.9.5",
@@ -43,6 +45,11 @@
     "productName": "MyLoL",
     "directories": {
       "output": "dist"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "ArtoMoon",
+      "repo": "lolstock"
     },
     "files": [
       "electron/**/*",
