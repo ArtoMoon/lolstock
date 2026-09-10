@@ -1,11 +1,11 @@
-# ⚔️ MyLoL – League of Legends Alt-Account Dashboard & Desktop Client
+# ⚔️ MyLoL – League of Legends Alt-Account Manager & Desktop Client
 
 <p align="center">
   <img src="https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/588.png" width="96" height="96" alt="MyLoL Logo" style="border-radius: 20px; box-shadow: 0 0 20px rgba(234, 179, 8, 0.4);" />
 </p>
 
 <p align="center">
-  <b>Tüm League of Legends ikincil ve smurf hesaplarınızı tek bir modern masaüstü panelinden yönetin ve senkronize edin.</b>
+  <b>A sleek, modern desktop client and dashboard to track, organize, and sync your League of Legends alternate and smurf accounts using the Riot Games API.</b>
 </p>
 
 <p align="center">
@@ -19,41 +19,42 @@
 
 ---
 
-## 🌟 Temel Özellikler
+## 🌟 Key Features
 
-* 🔄 **Riot API Gerçek Zamanlı Senkronizasyon:** Riot ID (`GameName#TAG`) üzerinden anlık Summoner Level, Solo/Duo & Flex rankları, lig puanı (LP) ve son maç geçmişi takibi.
-* 🛡️ **Riot Games ToS & API Uyumluluğu:** Kişisel hesap takip ve senkronizasyon standartlarına tam uyumlu mimari.
-* ⚡ **Akıllı Rate-Limit Koruması:** Riot API sınırlarını aşmamak için otomatik batch delay loop (her hesap arası 1500ms) ve HTTP 429 kurtarma mekanizması.
-* 🖥️ **Özel Masaüstü İstemcisi (Native Desktop App):** 
-  * Windows için çerçevesiz (frameless) şık Riot Client tarzı arayüz.
-  * Sürüklenebilir başlık çubuğu (`drag-region`).
-  * Web tarayıcısı hissiyatından arındırılmış, optimize masaüstü `.exe` çıktısı.
-* 📊 **Zengin İstatistikler ve Filtreleme:** Tek tıkla statü filtreleri (`Mevcut`, `Aktif`, `Level`, `Arşivlendi`, `Ban`), detaylı lig rozetleri ve dinamik arama.
-* 🔒 **Güvenli ve Yerel:** API anahtarları asla istemciye açılmaz (`'use server'`), tüm veriler yerel MongoDB veritabanınızda şifrelenir/saklanır.
+* 🔄 **Real-Time Riot API Synchronization:** Live lookup and sync for Summoner Level, Solo/Duo & Flex ranks, LP, and recent match history via modern Riot ID (`GameName#TAG`).
+* 🛡️ **Riot Games ToS & API Policy Compliant:** Purpose-built for personal account management without violating developer guidelines.
+* ⚡ **Smart Rate-Limit Protection:** Built-in sequential batch delay loop (1500ms between accounts) and HTTP 429 backoff handling to prevent rate-limit exceedances.
+* 🖥️ **Native Desktop Client Experience:**
+  * Frameless dark Hextech theme with custom window drag region (`drag-region`).
+  * Native window controls integrated directly into the titlebar.
+  * Disables standard browser context menus and accidental refresh shortcuts (F5 / Ctrl+R).
+  * Custom subtle dark scrollbars.
+* 📊 **Interactive Analytics & Tag Filtering:** One-click filtering by account status (`Available`, `Active`, `Leveling`, `Archived`, `Banned`), tier badges, and live search.
+* 🔒 **Secure & Local-First:** All API keys remain strictly on the server (`'use server'`), and all account data is stored locally in your MongoDB database.
 
 ---
 
-## 🚀 Başlangıç ve Kurulum
+## 🚀 Getting Started
 
-### Gereksinimler
-* [Node.js](https://nodejs.org/) (v20 veya üzeri önerilir)
-* [Yarn](https://yarnpkg.com/) paket yöneticisi
-* Yerel [MongoDB Community Server](https://www.mongodb.com/try/download/community) veya MongoDB Atlas URI
-* [Riot Games Developer Portal](https://developer.riotgames.com/) üzerinden alınmış geçerli bir API Key
+### Prerequisites
+* [Node.js](https://nodejs.org/) (v20 or higher recommended)
+* [Yarn](https://yarnpkg.com/) package manager
+* Local [MongoDB Community Server](https://www.mongodb.com/try/download/community) instance or a MongoDB Atlas URI
+* A valid API Key from the [Riot Games Developer Portal](https://developer.riotgames.com/)
 
-### 1. Depoyu Klonlayın
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/ArtoMoon/lolstock.git
 cd lolstock
 ```
 
-### 2. Bağımlılıkları Yükleyin
+### 2. Install Dependencies
 ```bash
 yarn install
 ```
 
-### 3. Ortam Değişkenlerini Ayarlayın
-Kök dizinde `.env.local` dosyası oluşturun ve bilgilerinizi girin:
+### 3. Configure Environment Variables
+Create a `.env.local` file in the root directory:
 ```env
 MONGODB_URI=mongodb://localhost:27017/
 RIOT_API_KEY=RGAPI-your-riot-api-key-here
@@ -61,58 +62,59 @@ RIOT_API_KEY=RGAPI-your-riot-api-key-here
 
 ---
 
-## 💻 Çalıştırma Seçenekleri
+## 💻 Running the Application
 
-### Web Geliştirme Modu (Tarayıcı)
+### Web Development Mode (Browser)
 ```bash
 yarn dev
 ```
-Tarayıcınızda [http://localhost:3000](http://localhost:3000) adresini açın.
+Open [http://localhost:3000](http://localhost:3000) in your web browser.
 
-### Masaüstü Geliştirme Modu (Electron + Next.js)
+### Desktop Client Mode (Electron + Next.js)
 ```bash
 yarn electron:dev
 ```
-*(Next.js sunucusuyla birlikte yerel Electron masaüstü penceresi açılır).*
+Launches the Next.js backend server and native Electron window simultaneously.
 
-### Windows Masaüstü (.exe) Derleme
+### Building Windows Executable (.exe)
 ```bash
-# Bağımsız klasör olarak unpacked .exe üretir:
+# Builds unpacked standalone desktop application:
 yarn electron:build:dir
 
-# Veya tek dosya taşınabilir (.exe) üretir:
+# Builds single-file portable .exe:
 yarn electron:build:portable
 ```
-Üretilen çalıştırılabilir dosya `dist/win-unpacked/MyLoL.exe` veya `dist/MyLoL-Portable-0.1.0.exe` konumunda yer alır.
+The compiled binaries will be output to `dist/win-unpacked/MyLoL.exe` or `dist/MyLoL-Portable-0.1.0.exe`.
 
 ---
 
-## 📁 Proje Mimarisi
+## 📁 Project Architecture
 
 ```text
 ├── app/
 │   ├── actions/          # Server Actions (syncAccounts.ts, accounts.ts)
 │   ├── api/              # API Route Handlers (/api/sync-accounts, /api/accounts)
-│   ├── accounts/[id]/    # Detaylı hesap ve maç analiz sayfası
-│   ├── layout.tsx        # Kök layout ve font yapılandırması
-│   └── page.tsx          # Ana dashboard sayfası
-├── components/           # UI Bileşenleri (AccountTable, StatusBadge, RankBadge vb.)
-├── electron/             # Electron masaüstü main & preload scriptleri
+│   ├── accounts/[id]/    # Detailed match history & account analytics view
+│   ├── layout.tsx        # Root layout, fonts & providers
+│   └── page.tsx          # Main dashboard view
+├── components/           # UI Components (AccountTable, StatusBadge, RankBadge, etc.)
+├── electron/             # Electron main process & preload context bridge
 ├── lib/
-│   ├── db/               # Mongoose global connection cache
-│   └── riot/             # Riot API wrapper (account, summoner, rank, matches)
-├── models/               # MongoDB Mongoose şemaları (Account.ts)
-├── scripts/              # Standalone build & dereference scriptleri
+│   ├── db/               # Global Mongoose cached connection
+│   └── riot/             # Modular Riot API client (account, summoner, rank, matches)
+├── models/               # MongoDB Mongoose schemas (Account.ts)
+├── scripts/              # Standalone preparation & symlink dereferencing
 └── package.json
 ```
 
 ---
 
-## ⚖️ Yasal Uyarı / Disclaimer
+## ⚖️ Legal Disclaimer
 
 *MyLoL isn’t endorsed by Riot Games and doesn’t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing League of Legends. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc. League of Legends © Riot Games, Inc.*
 
 ---
 
-## 📝 Lisans
-Bu proje MIT lisansı ile lisanslanmıştır.
+## 📝 License
+
+This project is licensed under the [MIT License](LICENSE).
