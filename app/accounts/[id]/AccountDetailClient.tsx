@@ -3,7 +3,13 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { AccountData } from '@/app/actions/accounts';
-import { updateAccountNotes, updateAccountUsername, updateAccountStatus, updateAccountPlatform } from '@/app/actions/accounts';
+import {
+  updateAccountNotes,
+  updateAccountUsername,
+  updateAccountStatus,
+  updateAccountPlatform,
+  deleteAccount,
+} from '@/app/actions/accounts';
 import type { AccountStatus } from '@/models/Account';
 import { syncAccount, syncMatchHistory } from '@/app/actions/accountSync';
 import StatusBadge from '@/components/StatusBadge';
@@ -25,7 +31,7 @@ function calculateWinRate(wins: number, losses: number) {
 }
 
 export default function AccountDetailClient({
-  account: initialAccount
+  account: initialAccount,
 }: AccountDetailClientProps) {
   const { t, language } = useLanguage();
   const router = useRouter();
@@ -38,7 +44,7 @@ export default function AccountDetailClient({
 
   const [isPending, startTransition] = useTransition();
   const [isSyncingMatches, startMatchSync] = useTransition();
-  
+
   const [checkMsg, setCheckMsg] = useState<string | null>(null);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [matchSyncMsg, setMatchSyncMsg] = useState<string | null>(null);
@@ -50,31 +56,46 @@ export default function AccountDetailClient({
       setAccount((prev) => ({
         ...prev,
         ...initialAccount,
-        matches: (initialAccount.matches && initialAccount.matches.length > 0) ? initialAccount.matches : prev.matches,
-        ranks: (initialAccount.ranks?.solo || initialAccount.ranks?.flex) ? initialAccount.ranks : prev.ranks,
+        matches:
+          initialAccount.matches && initialAccount.matches.length > 0
+            ? initialAccount.matches
+            : prev.matches,
+        ranks:
+          initialAccount.ranks?.solo || initialAccount.ranks?.flex
+            ? initialAccount.ranks
+            : prev.ranks,
       }));
       setNotes(initialAccount.notes ?? '');
       setUsername(initialAccount.username ?? '');
     }
   }, [initialAccount]);
 
-  // Veritabanından gelen önbelleğe alınmış Riot verileri
   const ranks = account.ranks || { solo: null, flex: null };
   const matches = account.matches || [];
   const profileIconId = account.profileIconId || 1;
 
-  // League of Graphs linki oluştur
   const [logGameName, logTagLine] = account.riotId.split('#');
   const platform = (account.platform || 'TR1').toUpperCase();
-  // League of Graphs region kodu (platform → url segment)
   const LOG_REGION: Record<string, string> = {
-    TR1: 'tr', EUW1: 'euw', EUN1: 'eune', NA1: 'na1', KR: 'kr',
-    BR1: 'br1', LA1: 'lan', LA2: 'las', OC1: 'oce', JP1: 'jp', RU: 'ru',
+    TR1: 'tr',
+    EUW1: 'euw',
+    EUN1: 'eune',
+    NA1: 'na1',
+    KR: 'kr',
+    BR1: 'br1',
+    LA1: 'lan',
+    LA2: 'las',
+    OC1: 'oce',
+    JP1: 'jp',
+    RU: 'ru',
   };
   const logRegion = LOG_REGION[platform] || platform.toLowerCase();
-  const leagueOfGraphsUrl = logGameName && logTagLine
-    ? `https://www.leagueofgraphs.com/summoner/${logRegion}/${encodeURIComponent(logGameName)}-${encodeURIComponent(logTagLine)}`
-    : null;
+  const leagueOfGraphsUrl =
+    logGameName && logTagLine
+      ? `https://www.leagueofgraphs.com/summoner/${logRegion}/${encodeURIComponent(
+          logGameName
+        )}-${encodeURIComponent(logTagLine)}`
+      : null;
 
   function handleStatusChange(newStatus: AccountStatus) {
     const oldStatus = account.status;
@@ -100,12 +121,16 @@ export default function AccountDetailClient({
     startTransition(async () => {
       const res = await updateAccountPlatform(account._id, newPlatform);
       if (res.success) {
-        setPlatformMsg(`✅ Sunucu güncellendi. Yeni verileri çekmek için 'Tam Senkronizasyon' yapabilirsiniz.`);
-        setTimeout(() => setPlatformMsg(null), 6000);
+        setPlatformMsg(
+          language === 'tr'
+            ? "✅ Sunucu güncellendi. Yeni verileri çekmek için 'Senkronize Et' yapabilirsiniz."
+            : '✅ Region updated. You can click Sync to fetch new data.'
+        );
+        setTimeout(() => setPlatformMsg(null), 5000);
         router.refresh();
       } else {
         setAccount((prev) => ({ ...prev, platform: oldPlatform }));
-        setPlatformMsg('❌ Hata: ' + (res.error || 'Güncellenemedi'));
+        setPlatformMsg('❌ ' + (res.error || 'Failed'));
       }
     });
   }
@@ -114,7 +139,11 @@ export default function AccountDetailClient({
     setSaveMsg(null);
     startTransition(async () => {
       const result = await updateAccountNotes(account._id, notes);
-      setSaveMsg(result.success ? '✅ Not kaydedildi.' : `❌ ${result.error}`);
+      setSaveMsg(
+        result.success
+          ? `✅ ${language === 'tr' ? 'Not kaydedildi.' : 'Note saved.'}`
+          : `❌ ${result.error}`
+      );
     });
   }
 
@@ -135,6 +164,19 @@ export default function AccountDetailClient({
     setTimeout(() => setCopiedUser(false), 2000);
   }
 
+  function handleDeleteAccount() {
+    if (!confirm(t('delete_confirm'))) return;
+    startTransition(async () => {
+      const res = await deleteAccount(account._id);
+      if (res.success) {
+        router.push('/');
+        router.refresh();
+      } else {
+        alert(res.error || 'Failed to delete account');
+      }
+    });
+  }
+
   function handleCheck() {
     setCheckMsg(null);
     startTransition(async () => {
@@ -150,15 +192,17 @@ export default function AccountDetailClient({
           const matchCount = result.updatedAccount?.matches?.length ?? 0;
           if (matchCount === 0) {
             setCheckMsg(
-              result.statusChanged
-                ? `Durum güncellendi → ${result.newStatus}. ℹ️ Oynanmış maç bulunamadı.`
-                : 'Seviye ve rank güncellendi. ℹ️ Bu hesapta oynanmış maç bulunamadı.'
+              language === 'tr'
+                ? result.statusChanged
+                  ? `Durum güncellendi → ${result.newStatus}. ℹ️ Oynanmış maç bulunamadı.`
+                  : 'Seviye ve rank güncellendi. ℹ️ Bu hesapta oynanmış maç bulunamadı.'
+                : 'Stats updated. ℹ️ No matches recorded.'
             );
           } else {
             setCheckMsg(
-              result.statusChanged
-                ? `Durum güncellendi → ${result.newStatus} (Son ${matchCount} maç çekildi)`
-                : `✅ Tüm veriler ve son ${matchCount} maç başarıyla güncellendi.`
+              language === 'tr'
+                ? `✅ Tüm veriler ve son ${matchCount} maç başarıyla güncellendi.`
+                : `✅ All data and last ${matchCount} matches successfully updated.`
             );
           }
           router.refresh();
@@ -167,7 +211,7 @@ export default function AccountDetailClient({
           setCheckMsg(`Hata: ${result.error}`);
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Bilinmeyen hata.';
+        const msg = err instanceof Error ? err.message : 'Error';
         setCheckMsg(`Hata: ${msg}`);
       }
     });
@@ -187,9 +231,17 @@ export default function AccountDetailClient({
           }
           const matchCount = result.updatedAccount?.matches?.length ?? 0;
           if (matchCount === 0) {
-            setMatchSyncMsg('ℹ️ Bu hesapta Riot API üzerinde oynanmış maç bulunamadı (0 maç).');
+            setMatchSyncMsg(
+              language === 'tr'
+                ? 'ℹ️ Bu hesapta Riot API üzerinde oynanmış maç bulunamadı (0 maç).'
+                : 'ℹ️ No match history found on Riot API for this account.'
+            );
           } else {
-            setMatchSyncMsg(`✅ Son ${matchCount} maç ve rank bilgileri başarıyla güncellendi!`);
+            setMatchSyncMsg(
+              language === 'tr'
+                ? `✅ Son ${matchCount} maç ve rank bilgileri başarıyla güncellendi!`
+                : `✅ Last ${matchCount} matches and ranks updated!`
+            );
           }
           router.refresh();
           setTimeout(() => setMatchSyncMsg(null), 5000);
@@ -197,43 +249,55 @@ export default function AccountDetailClient({
           setMatchSyncMsg(`❌ Hata: ${result.error}`);
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Bilinmeyen hata.';
+        const msg = err instanceof Error ? err.message : 'Error';
         setMatchSyncMsg(`❌ Hata: ${msg}`);
       }
     });
   }
 
   const lastChecked = account.lastCheckedAt
-    ? new Date(account.lastCheckedAt).toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US')
+    ? new Date(account.lastCheckedAt).toLocaleString(
+        language === 'tr' ? 'tr-TR' : 'en-US'
+      )
     : t('never');
 
   const createdAt = account.createdAt
-    ? new Date(account.createdAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')
+    ? new Date(account.createdAt).toLocaleDateString(
+        language === 'tr' ? 'tr-TR' : 'en-US'
+      )
     : '–';
 
-  // Son X Maç Özeti
-  const wins = matches.filter(m => m.win).length;
-  const recentWinRate = matches.length > 0 ? Math.round((wins / matches.length) * 100) : 0;
-  const avgKills = matches.length > 0 ? (matches.reduce((a, b) => a + b.kills, 0) / matches.length).toFixed(1) : 0;
-  const avgDeaths = matches.length > 0 ? (matches.reduce((a, b) => a + b.deaths, 0) / matches.length).toFixed(1) : 0;
-  const avgAssists = matches.length > 0 ? (matches.reduce((a, b) => a + b.assists, 0) / matches.length).toFixed(1) : 0;
+  const wins = matches.filter((m) => m.win).length;
+  const recentWinRate =
+    matches.length > 0 ? Math.round((wins / matches.length) * 100) : 0;
+  const avgKills =
+    matches.length > 0
+      ? (matches.reduce((a, b) => a + b.kills, 0) / matches.length).toFixed(1)
+      : 0;
+  const avgDeaths =
+    matches.length > 0
+      ? (matches.reduce((a, b) => a + b.deaths, 0) / matches.length).toFixed(1)
+      : 0;
+  const avgAssists =
+    matches.length > 0
+      ? (matches.reduce((a, b) => a + b.assists, 0) / matches.length).toFixed(1)
+      : 0;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
       {/* SOL SÜTUN (Profil, Ranklar, Notlar) */}
       <div className="lg:col-span-4 flex flex-col gap-6">
-        
         {/* Profil Kartı */}
         <div className="bg-[#0e192d]/85 border border-[#3d9be9]/18 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md">
           <div className="h-24 bg-gradient-to-r from-blue-900 to-slate-900" />
           <div className="px-6 pb-6 relative flex flex-col">
             <div className="flex justify-between items-start -mt-12 mb-4">
               <div className="w-24 h-24 rounded-2xl border-4 border-[#0e192d] overflow-hidden bg-slate-800 relative shadow-xl shrink-0">
-                <Image 
-                  src={ddragon.profileIcon(profileIconId)} 
-                  alt="Profile Icon" 
-                  width={96} height={96}
+                <Image
+                  src={ddragon.profileIcon(profileIconId)}
+                  alt="Profile Icon"
+                  width={96}
+                  height={96}
                   unoptimized
                 />
                 <div className="absolute bottom-0 inset-x-0 bg-black/60 text-center text-xs font-bold text-white py-0.5">
@@ -245,7 +309,7 @@ export default function AccountDetailClient({
                 <StatusBadge status={account.status} />
               </div>
             </div>
-            
+
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <RiotIdDisplay
@@ -255,22 +319,29 @@ export default function AccountDetailClient({
                 />
               </div>
               <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                <p className="text-xs text-slate-400">Eklendi: {createdAt}</p>
-                {/* League of Graphs Dış Linki */}
+                <p className="text-xs text-slate-400">
+                  {t('added_label')}: {createdAt}
+                </p>
                 {leagueOfGraphsUrl && (
                   <a
                     href={leagueOfGraphsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#1a6b3c]/15 text-emerald-300 border border-emerald-500/25 hover:bg-[#1a6b3c]/30 hover:border-emerald-400/50 transition-all group cursor-pointer"
-                    title="League of Graphs'ta profili görüntüle"
+                    title="League of Graphs"
                   >
-                    <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                    <svg
+                      className="w-3 h-3"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
                       <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                       <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                     </svg>
                     <span>League of Graphs</span>
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px]">↗</span>
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px]">
+                      ↗
+                    </span>
                   </a>
                 )}
               </div>
@@ -281,7 +352,7 @@ export default function AccountDetailClient({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <span className="text-[0.65rem] font-bold uppercase tracking-wider text-slate-400 block">
-                    Giriş Kullanıcı Adı
+                    {t('label_username')}
                   </span>
                   {isEditingUsername ? (
                     <div className="flex items-center gap-2 mt-1.5">
@@ -289,7 +360,7 @@ export default function AccountDetailClient({
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Kullanıcı adı gir"
+                        placeholder={t('label_username')}
                         className="bg-[#0f1923] border border-blue-500/40 rounded-lg px-2.5 py-1 text-xs text-white font-mono outline-none w-full focus:border-blue-400"
                         autoFocus
                       />
@@ -297,7 +368,7 @@ export default function AccountDetailClient({
                         onClick={handleSaveUsername}
                         disabled={isPending}
                         className="px-2.5 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30 text-xs rounded-lg font-semibold cursor-pointer"
-                        title="Kaydet"
+                        title={t('save')}
                       >
                         ✓
                       </button>
@@ -307,7 +378,7 @@ export default function AccountDetailClient({
                           setIsEditingUsername(false);
                         }}
                         className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-slate-400 text-xs rounded-lg cursor-pointer"
-                        title="İptal"
+                        title={t('cancel')}
                       >
                         ✕
                       </button>
@@ -321,7 +392,7 @@ export default function AccountDetailClient({
                               <span
                                 onClick={() => setIsUsernameRevealed(false)}
                                 className="text-sm font-mono font-bold text-amber-300 truncate cursor-pointer hover:opacity-80"
-                                title="Gizlemek için tıkla"
+                                title={t('hide_username')}
                               >
                                 {account.username}
                               </span>
@@ -329,7 +400,7 @@ export default function AccountDetailClient({
                                 type="button"
                                 onClick={() => setIsUsernameRevealed(false)}
                                 className="text-slate-400 hover:text-white transition-colors p-0.5 cursor-pointer text-xs"
-                                title="Gizle"
+                                title={t('hide_username')}
                               >
                                 🙈
                               </button>
@@ -339,13 +410,13 @@ export default function AccountDetailClient({
                               type="button"
                               onClick={() => setIsUsernameRevealed(true)}
                               className="group flex items-center gap-2 cursor-pointer text-left bg-transparent border-none p-0"
-                              title="Kullanıcı adını görmek için tıkla"
+                              title={t('show_username')}
                             >
                               <span className="text-sm font-mono tracking-widest text-slate-400 group-hover:text-amber-300 transition-colors">
                                 ••••••••
                               </span>
                               <span className="text-[0.7rem] text-slate-500 group-hover:text-blue-400 transition-colors flex items-center gap-1">
-                                👁️ Göster
+                                👁️ {t('show_username')}
                               </span>
                             </button>
                           )}
@@ -353,13 +424,15 @@ export default function AccountDetailClient({
                             type="button"
                             onClick={copyUsername}
                             className="text-xs text-slate-400 hover:text-amber-300 transition-colors p-0.5 cursor-pointer"
-                            title="Kullanıcı Adını Kopyala"
+                            title="Copy"
                           >
                             {copiedUser ? '✅' : '📋'}
                           </button>
                         </>
                       ) : (
-                        <span className="text-slate-500 text-xs font-sans italic">Belirtilmedi</span>
+                        <span className="text-slate-500 text-xs font-sans italic">
+                          {t('not_set')}
+                        </span>
                       )}
                     </div>
                   )}
@@ -368,9 +441,9 @@ export default function AccountDetailClient({
                   <button
                     onClick={() => setIsEditingUsername(true)}
                     className="text-xs text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
-                    title="Kullanıcı adını düzenle"
+                    title={t('edit_label')}
                   >
-                    ✏️ Düzenle
+                    ✏️ {t('edit_label')}
                   </button>
                 )}
               </div>
@@ -378,36 +451,66 @@ export default function AccountDetailClient({
 
             <div className="mt-6 pt-4 border-t border-white/5 text-sm flex flex-col gap-3">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400 font-medium">{t('status_select_label')}:</span>
+                <span className="text-slate-400 font-medium">
+                  {t('status_select_label')}:
+                </span>
                 <select
                   className="bg-[#0f1923] border border-blue-500/30 hover:border-blue-400 rounded-lg px-2.5 py-1 text-xs text-[#e8f0fe] cursor-pointer outline-none transition-colors font-medium"
                   value={account.status}
-                  onChange={(e) => handleStatusChange(e.target.value as AccountStatus)}
+                  onChange={(e) =>
+                    handleStatusChange(e.target.value as AccountStatus)
+                  }
                   disabled={isPending}
                 >
-                  <option value="available" className="bg-[#0f1923]">✅ {t('status_available')}</option>
-                  <option value="archived" className="bg-[#0f1923]">📁 {t('status_archived')}</option>
-                  <option value="active" className="bg-[#0f1923]">🎮 {t('status_active')}</option>
-                  <option value="level" className="bg-[#0f1923]">⚡ {t('status_level')}</option>
-                  <option value="error_checking" className="bg-[#0f1923]">🚫 {t('status_error_checking')}</option>
+                  <option value="available" className="bg-[#0f1923]">
+                    ✅ {t('status_available')}
+                  </option>
+                  <option value="archived" className="bg-[#0f1923]">
+                    📁 {t('status_archived')}
+                  </option>
+                  <option value="active" className="bg-[#0f1923]">
+                    🎮 {t('status_active')}
+                  </option>
+                  <option value="level" className="bg-[#0f1923]">
+                    ⚡ {t('status_level')}
+                  </option>
+                  <option value="error_checking" className="bg-[#0f1923]">
+                    🚫 {t('status_error_checking')}
+                  </option>
                 </select>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-slate-400 font-medium">{t('th_region')}:</span>
+                <span className="text-slate-400 font-medium">
+                  {t('th_region')}:
+                </span>
                 <select
                   className="bg-[#0f1923] border border-blue-500/30 hover:border-blue-400 rounded-lg px-2.5 py-1 text-xs text-[#e8f0fe] cursor-pointer outline-none transition-colors font-medium"
                   value={(account.platform || 'TR1').toUpperCase()}
                   onChange={(e) => handlePlatformChange(e.target.value)}
                   disabled={isPending}
                 >
-                  <option value="TR1" className="bg-[#0f1923]">🇹🇷 TR (Türkiye)</option>
-                  <option value="EUW1" className="bg-[#0f1923]">🇪🇺 West (Batı Avrupa)</option>
-                  <option value="EUN1" className="bg-[#0f1923]">🇪🇺 EUNE (Doğu Avrupa)</option>
-                  <option value="NA1" className="bg-[#0f1923]">🇺🇸 NA (Kuzey Amerika)</option>
-                  <option value="KR" className="bg-[#0f1923]">🇰🇷 KR (Kore)</option>
-                  <option value="BR1" className="bg-[#0f1923]">🇧🇷 BR (Brezilya)</option>
-                  <option value="RU" className="bg-[#0f1923]">🇷🇺 RU (Rusya)</option>
+                  <option value="TR1" className="bg-[#0f1923]">
+                    {t('platform_tr')}
+                  </option>
+                  <option value="EUW1" className="bg-[#0f1923]">
+                    {t('platform_euw')}
+                  </option>
+                  <option value="EUN1" className="bg-[#0f1923]">
+                    {t('platform_eun')}
+                  </option>
+                  <option value="NA1" className="bg-[#0f1923]">
+                    {t('platform_na')}
+                  </option>
+                  <option value="KR" className="bg-[#0f1923]">
+                    {t('platform_kr')}
+                  </option>
+                  <option value="BR1" className="bg-[#0f1923]">
+                    {t('platform_br')}
+                  </option>
+                  <option value="RU" className="bg-[#0f1923]">
+                    {t('platform_ru')}
+                  </option>
                 </select>
               </div>
               <div className="flex justify-between">
@@ -428,43 +531,87 @@ export default function AccountDetailClient({
               </p>
             )}
 
-            <button
-              className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 hover:border-blue-500/50 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-              onClick={handleCheck}
-              disabled={isPending || isSyncingMatches}
-            >
-              {isPending ? '⏳ ...' : `🔄 ${t('sync_btn')} (API)`}
-            </button>
-            {checkMsg && <p className="text-xs text-center mt-2 text-slate-300">{checkMsg}</p>}
+            {/* Senkronize Et & Hesabı Sil Butonları */}
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 hover:border-blue-500/50 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                onClick={handleCheck}
+                disabled={isPending || isSyncingMatches}
+              >
+                {isPending ? '⏳ ...' : `🔄 ${t('sync_btn')} (API)`}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isPending || isSyncingMatches}
+                className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-300 bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/25 hover:border-rose-400 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                title={t('delete_account_btn')}
+              >
+                <span>🗑️</span>
+                <span>{t('delete_account_btn')}</span>
+              </button>
+            </div>
+
+            {checkMsg && (
+              <p className="text-xs text-center mt-2 text-slate-300">
+                {checkMsg}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Rank Kartları */}
         <div className="bg-[#0e192d]/85 border border-[#3d9be9]/18 rounded-2xl p-5 shadow-lg backdrop-blur-md flex flex-col gap-4">
-          
           {/* Solo/Duo */}
           <div className="flex items-center gap-4 p-3 bg-black/20 rounded-xl border border-white/5">
             <div className="w-16 h-16 flex items-center justify-center">
-              <RankBadge rank={ranks.solo?.formattedRank || account.rank || 'UNRANKED'} size={64} />
+              <RankBadge
+                rank={ranks.solo?.formattedRank || account.rank || 'UNRANKED'}
+                size={64}
+              />
             </div>
             <div className="flex-1">
-              <p className="text-xs text-slate-400 font-semibold mb-1">{t('solo_duo')}</p>
+              <p className="text-xs text-slate-400 font-semibold mb-1">
+                {t('solo_duo')}
+              </p>
               {ranks.solo ? (
                 <>
-                  <p className="text-lg font-bold text-white leading-none">{ranks.solo.formattedRank}</p>
+                  <p className="text-lg font-bold text-white leading-none">
+                    {ranks.solo.formattedRank}
+                  </p>
                   <p className="text-xs text-slate-400 mt-1">
-                    <span className="text-green-400">{ranks.solo.wins}W</span> - <span className="text-red-400">{ranks.solo.losses}L</span> 
-                    <span className="mx-2">•</span> 
-                    Win Rate <strong className="text-white">{calculateWinRate(ranks.solo.wins, ranks.solo.losses)}%</strong>
+                    <span className="text-green-400">
+                      {ranks.solo.wins}
+                      {t('stat_win_char')}
+                    </span>{' '}
+                    -{' '}
+                    <span className="text-red-400">
+                      {ranks.solo.losses}
+                      {t('stat_loss_char')}
+                    </span>
+                    <span className="mx-2">•</span>
+                    Win Rate{' '}
+                    <strong className="text-white">
+                      {calculateWinRate(ranks.solo.wins, ranks.solo.losses)}%
+                    </strong>
                   </p>
                 </>
               ) : account.rank && account.rank !== 'UNRANKED' ? (
                 <>
-                  <p className="text-lg font-bold text-slate-300 leading-none">{account.rank}</p>
-                  <p className="text-[0.65rem] text-amber-500/80 mt-1 uppercase tracking-wider font-semibold">Geçmiş Sezon / Kayıtlı</p>
+                  <p className="text-lg font-bold text-slate-300 leading-none">
+                    {account.rank}
+                  </p>
+                  <p className="text-[0.65rem] text-amber-500/80 mt-1 uppercase tracking-wider font-semibold">
+                    {language === 'tr'
+                      ? 'Geçmiş Sezon / Kayıtlı'
+                      : 'Previous Season / Saved'}
+                  </p>
                 </>
               ) : (
-                <p className="text-sm font-bold text-slate-500">{t('unranked')}</p>
+                <p className="text-sm font-bold text-slate-500">
+                  {t('unranked')}
+                </p>
               )}
             </div>
           </div>
@@ -472,40 +619,65 @@ export default function AccountDetailClient({
           {/* Flex */}
           <div className="flex items-center gap-4 p-3 bg-black/20 rounded-xl border border-white/5">
             <div className="w-14 h-14 flex items-center justify-center opacity-80">
-              <RankBadge rank={ranks.flex?.formattedRank || 'UNRANKED'} size={48} />
+              <RankBadge
+                rank={ranks.flex?.formattedRank || 'UNRANKED'}
+                size={48}
+              />
             </div>
             <div className="flex-1">
-              <p className="text-xs text-slate-400 font-semibold mb-1">{t('flex')}</p>
+              <p className="text-xs text-slate-400 font-semibold mb-1">
+                {t('flex')}
+              </p>
               {ranks.flex ? (
                 <>
-                  <p className="text-sm font-bold text-white leading-none">{ranks.flex.formattedRank}</p>
+                  <p className="text-sm font-bold text-white leading-none">
+                    {ranks.flex.formattedRank}
+                  </p>
                   <p className="text-xs text-slate-400 mt-1">
-                    <span className="text-green-400">{ranks.flex.wins}W</span> - <span className="text-red-400">{ranks.flex.losses}L</span> 
-                    <span className="mx-2">•</span> 
-                    WR <strong className="text-white">{calculateWinRate(ranks.flex.wins, ranks.flex.losses)}%</strong>
+                    <span className="text-green-400">
+                      {ranks.flex.wins}
+                      {t('stat_win_char')}
+                    </span>{' '}
+                    -{' '}
+                    <span className="text-red-400">
+                      {ranks.flex.losses}
+                      {t('stat_loss_char')}
+                    </span>
+                    <span className="mx-2">•</span>
+                    WR{' '}
+                    <strong className="text-white">
+                      {calculateWinRate(ranks.flex.wins, ranks.flex.losses)}%
+                    </strong>
                   </p>
                 </>
               ) : (
-                <p className="text-sm font-bold text-slate-500">{t('unranked')}</p>
+                <p className="text-sm font-bold text-slate-500">
+                  {t('unranked')}
+                </p>
               )}
             </div>
           </div>
-
         </div>
 
         {/* Notlar */}
         <div className="bg-[#0e192d]/85 border border-[#3d9be9]/18 rounded-2xl p-5 shadow-lg backdrop-blur-md">
-          <h2 className="text-sm font-bold text-white mb-3 flex items-center gap-2">📝 Notlar</h2>
+          <h2 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            📝 {t('notes_title')}
+          </h2>
           <textarea
             className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-[#e8f0fe] font-sans min-h-[100px] resize-y outline-none transition-all focus:border-yellow-500/50 focus:bg-black/50"
-            placeholder="Bu hesap hakkında not ekle..."
+            placeholder={t('notes_placeholder')}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             disabled={isPending}
             maxLength={500}
           />
           <div className="flex justify-between items-center mt-3">
-            <span className={`text-xs font-medium ${saveMsg?.includes('✅') ? 'text-green-400' : 'text-red-400'}`}>
+            <span
+              className={`text-xs font-medium ${
+                saveMsg?.includes('✅') ? 'text-green-400' : 'text-red-400'
+              }`}
+            >
               {saveMsg}
             </span>
             <button
@@ -517,41 +689,57 @@ export default function AccountDetailClient({
             </button>
           </div>
         </div>
-
       </div>
-
 
       {/* SAĞ SÜTUN (Maç Geçmişi) */}
       <div className="lg:col-span-8 flex flex-col gap-4">
-        
         {/* Maç Geçmişi Üst Barı - Daima Görünür */}
         <div className="bg-[#0e192d]/85 border border-[#3d9be9]/18 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg backdrop-blur-md">
           {matches.length > 0 ? (
             <div className="flex items-center gap-6">
               <div>
-                <p className="text-xs text-slate-400 font-semibold mb-1">Son {matches.length} Maç (Kayıtlı)</p>
+                <p className="text-xs text-slate-400 font-semibold mb-1">
+                  {t('recent_matches_title').replace(
+                    '{count}',
+                    String(matches.length)
+                  )}
+                </p>
                 <div className="flex items-center gap-3">
-                  <span className={`text-2xl font-bold ${recentWinRate >= 50 ? 'text-blue-400' : 'text-red-400'}`}>
+                  <span
+                    className={`text-2xl font-bold ${
+                      recentWinRate >= 50 ? 'text-blue-400' : 'text-red-400'
+                    }`}
+                  >
                     {recentWinRate}% WR
                   </span>
-                  <span className="text-sm text-slate-400">({wins}W {matches.length - wins}L)</span>
+                  <span className="text-sm text-slate-400">
+                    ({wins}
+                    {t('stat_win_char')} {matches.length - wins}
+                    {t('stat_loss_char')})
+                  </span>
                 </div>
               </div>
               <div className="h-10 w-px bg-white/10" />
               <div>
-                <p className="text-xs text-slate-400 font-semibold mb-1">Ortalama KDA</p>
+                <p className="text-xs text-slate-400 font-semibold mb-1">
+                  {t('avg_kda')}
+                </p>
                 <p className="text-lg font-bold text-white">
-                  {avgKills} <span className="text-slate-500">/</span> <span className="text-red-400">{avgDeaths}</span> <span className="text-slate-500">/</span> {avgAssists}
+                  {avgKills} <span className="text-slate-500">/</span>{' '}
+                  <span className="text-red-400">{avgDeaths}</span>{' '}
+                  <span className="text-slate-500">/</span> {avgAssists}
                 </p>
               </div>
             </div>
           ) : (
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                🎮 Maç Geçmişi
+                🎮 {t('match_history')}
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Riot API üzerinden son 5 karşılaşma ve dereceli (Solo/Flex) rank bilgileri
+                {language === 'tr'
+                  ? 'Riot API üzerinden son 5 karşılaşma ve dereceli (Solo/Flex) rank bilgileri'
+                  : 'Recent 5 matches and ranked info via Riot API'}
               </p>
             </div>
           )}
@@ -566,17 +754,29 @@ export default function AccountDetailClient({
               {isSyncingMatches ? (
                 <>
                   <span className="inline-block animate-spin">⏳</span>
-                  <span>Maçlar Çekiliyor...</span>
+                  <span>{t('fetching_matches')}</span>
                 </>
               ) : (
                 <>
                   <span>⚔️</span>
-                  <span>{matches.length > 0 ? 'Son Maçları Güncelle' : 'Maçları Riot\'tan Çek'}</span>
+                  <span>
+                    {matches.length > 0
+                      ? t('update_matches')
+                      : t('fetch_matches')}
+                  </span>
                 </>
               )}
             </button>
             {matchSyncMsg && (
-              <span className={`text-xs mt-1.5 font-medium ${matchSyncMsg.includes('✅') ? 'text-green-400' : matchSyncMsg.includes('ℹ️') || matchSyncMsg.includes('⚠️') ? 'text-amber-400' : 'text-red-400'}`}>
+              <span
+                className={`text-xs mt-1.5 font-medium ${
+                  matchSyncMsg.includes('✅')
+                    ? 'text-green-400'
+                    : matchSyncMsg.includes('ℹ️') || matchSyncMsg.includes('⚠️')
+                    ? 'text-amber-400'
+                    : 'text-red-400'
+                }`}
+              >
                 {matchSyncMsg}
               </span>
             )}
@@ -587,19 +787,21 @@ export default function AccountDetailClient({
         <div className="flex flex-col gap-2">
           {matches.length === 0 ? (
             <div className="bg-[#0e192d]/50 border border-white/10 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-4">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl ${account.lastCheckedAt ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-indigo-500/10 border border-indigo-500/20'}`}>
+              <div
+                className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl ${
+                  account.lastCheckedAt
+                    ? 'bg-amber-500/10 border border-amber-500/20'
+                    : 'bg-indigo-500/10 border border-indigo-500/20'
+                }`}
+              >
                 {account.lastCheckedAt ? '📭' : '🎮'}
               </div>
               <div>
                 <h3 className="text-base font-bold text-white">
-                  {account.lastCheckedAt
-                    ? 'Bu hesapta oynanmış maç bulunamadı'
-                    : 'Veritabanında kayıtlı maç bulunmuyor'}
+                  {t('no_matches_title')}
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm">
-                  {account.lastCheckedAt
-                    ? 'Riot API sorgulandı ancak bu hesapta son zamanlarda oynanmış herhangi bir karşılaşma (Normal, Dereceli, ARAM) bulunmuyor veya hesap yeni açılmış.'
-                    : 'Son 5 karşılaşmayı ve güncel Solo/Flex ranklarını Riot API üzerinden çekip kaydetmek için butona tıklayın.'}
+                  {t('no_matches_desc')}
                 </p>
               </div>
               <button
@@ -610,46 +812,69 @@ export default function AccountDetailClient({
                 {isSyncingMatches ? (
                   <>
                     <span className="inline-block animate-spin">⏳</span>
-                    <span>Riot API'den Maçlar Çekiliyor...</span>
+                    <span>{t('fetching_matches')}</span>
                   </>
                 ) : (
                   <>
                     <span>⚔️</span>
-                    <span>{account.lastCheckedAt ? 'Tekrar Kontrol Et' : 'Maçları Şimdi Çek'}</span>
+                    <span>
+                      {matches.length > 0
+                        ? t('update_matches')
+                        : t('fetch_matches')}
+                    </span>
                   </>
                 )}
               </button>
               {matchSyncMsg && (
-                <p className={`text-xs mt-2 font-medium ${matchSyncMsg.includes('✅') ? 'text-green-400' : matchSyncMsg.includes('ℹ️') || matchSyncMsg.includes('⚠️') ? 'text-amber-400' : 'text-red-400'}`}>
+                <p
+                  className={`text-xs mt-2 font-medium ${
+                    matchSyncMsg.includes('✅')
+                      ? 'text-green-400'
+                      : matchSyncMsg.includes('ℹ️') ||
+                        matchSyncMsg.includes('⚠️')
+                      ? 'text-amber-400'
+                      : 'text-red-400'
+                  }`}
+                >
                   {matchSyncMsg}
                 </p>
               )}
             </div>
           ) : (
             matches.map((match) => (
-              <div 
-                key={match.matchId} 
+              <div
+                key={match.matchId}
                 className={`flex flex-col sm:flex-row items-center gap-4 p-3 pr-6 rounded-xl border-l-4 shadow-sm bg-black/20 transition-colors hover:bg-black/40
-                  ${match.win ? 'border-l-blue-500/80 border-y border-r border-blue-500/10' : 'border-l-red-500/80 border-y border-r border-red-500/10'}
+                  ${
+                    match.win
+                      ? 'border-l-blue-500/80 border-y border-r border-blue-500/10'
+                      : 'border-l-red-500/80 border-y border-r border-red-500/10'
+                  }
                 `}
               >
                 {/* Sonuç & Süre */}
                 <div className="w-20 flex flex-col items-center sm:items-start text-center sm:text-left shrink-0">
-                  <span className={`text-sm font-bold ${match.win ? 'text-blue-400' : 'text-red-400'}`}>
+                  <span
+                    className={`text-sm font-bold ${
+                      match.win ? 'text-blue-400' : 'text-red-400'
+                    }`}
+                  >
                     {match.win ? t('victory') : t('defeat')}
                   </span>
                   <span className="text-xs text-slate-500 mt-0.5">
-                    {Math.floor(match.gameDuration / 60)}m {match.gameDuration % 60}s
+                    {Math.floor(match.gameDuration / 60)}m{' '}
+                    {match.gameDuration % 60}s
                   </span>
                 </div>
 
                 {/* Şampiyon */}
                 <div className="relative shrink-0">
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#14233c]">
-                    <Image 
-                      src={ddragon.champion(match.championName)} 
-                      alt={match.championName} 
-                      width={48} height={48}
+                    <Image
+                      src={ddragon.champion(match.championName)}
+                      alt={match.championName}
+                      width={48}
+                      height={48}
                       unoptimized
                     />
                   </div>
@@ -661,44 +886,53 @@ export default function AccountDetailClient({
                 {/* KDA & CS */}
                 <div className="flex flex-col items-center sm:items-start w-28 shrink-0">
                   <span className="text-sm font-bold text-white tracking-wide">
-                    {match.kills} <span className="text-slate-500">/</span> <span className="text-red-400">{match.deaths}</span> <span className="text-slate-500">/</span> {match.assists}
+                    {match.kills}{' '}
+                    <span className="text-slate-500">/</span>{' '}
+                    <span className="text-red-400">{match.deaths}</span>{' '}
+                    <span className="text-slate-500">/</span> {match.assists}
                   </span>
                   <span className="text-[0.65rem] text-slate-400 mt-1">
-                    <strong className="text-slate-300">{match.cs}</strong> CS ({(match.cs / (match.gameDuration / 60)).toFixed(1)}/m)
+                    <strong className="text-slate-300">{match.cs}</strong> CS (
+                    {(match.cs / (match.gameDuration / 60)).toFixed(1)}/m)
                   </span>
                 </div>
 
                 {/* Eşyalar */}
                 <div className="flex items-center gap-1 mt-2 sm:mt-0 flex-wrap justify-center sm:justify-start">
-                  {match.items.slice(0,6).map((itemId, i) => {
+                  {match.items.slice(0, 6).map((itemId, i) => {
                     const itemUrl = ddragon.item(itemId);
                     return itemUrl ? (
-                      <div key={i} className="w-6 h-6 rounded bg-slate-800 border border-black/50 overflow-hidden">
-                        <Image src={itemUrl} alt="item" width={24} height={24} unoptimized />
+                      <div
+                        key={i}
+                        className="w-6 h-6 rounded bg-slate-800 border border-black/50 overflow-hidden"
+                      >
+                        <Image
+                          src={itemUrl}
+                          alt="item"
+                          width={24}
+                          height={24}
+                          unoptimized
+                        />
                       </div>
                     ) : (
-                      <div key={i} className="w-6 h-6 rounded bg-black/30 border border-white/5" />
+                      <div
+                        key={i}
+                        className="w-6 h-6 rounded bg-white/5 border border-white/10"
+                      />
                     );
                   })}
-                  {/* Trinket */}
-                  {ddragon.item(match.items[6]) ? (
-                    <div className="w-6 h-6 rounded-full bg-slate-800 border border-black/50 overflow-hidden ml-1">
-                      <Image src={ddragon.item(match.items[6])!} alt="trinket" width={24} height={24} unoptimized />
-                    </div>
-                  ) : (
-                    <div className="w-6 h-6 rounded-full bg-black/30 border border-white/5 ml-1" />
-                  )}
                 </div>
 
-                {/* Rol */}
-                <div className="ml-auto hidden md:flex items-center justify-center bg-black/30 px-2 py-1 rounded text-xs text-slate-400">
-                  {match.role !== 'NONE' ? match.role.replace('BOTTOM', 'ADC').replace('UTILITY', 'SUPP') : match.lane}
+                {/* Rol / Şerit */}
+                <div className="sm:ml-auto text-right text-xs text-slate-400">
+                  <span className="px-2 py-0.5 rounded bg-white/5 font-mono text-[10px] text-slate-300">
+                    {match.lane === 'NONE' ? 'ARAM / SPECIAL' : match.lane}
+                  </span>
                 </div>
               </div>
             ))
           )}
         </div>
-
       </div>
     </div>
   );

@@ -100,7 +100,7 @@ export default function DashboardView({ accounts }: DashboardViewProps) {
           title={t('stat_archived')}
         >
           <div className="text-2xl sm:text-3xl flex items-center justify-center w-12 h-12 bg-black/25 rounded-xl shrink-0">
-            💸
+            📁
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-2xl sm:text-3xl font-extrabold leading-none text-white font-mono">

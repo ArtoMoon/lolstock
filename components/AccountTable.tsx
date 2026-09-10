@@ -242,7 +242,7 @@ export default function AccountTable({
             </span>
           </button>
 
-          {/* 💸 SATILDI TAGI */}
+          {/* 📁 ARŞİV TAGI */}
           <button
             type="button"
             onClick={() => setStatusFilter(statusFilter === 'archived' ? '' : 'archived')}
