@@ -31,7 +31,7 @@ export interface AccountFilters {
  * @returns {Promise<AccountData[]>} Hesap listesi (en son eklenen önce)
  *
  * @example
- * const accounts = await getAccounts({ status: 'in_stock' });
+ * const accounts = await getAccounts({ status: 'available' });
  */
 export async function getAccounts(
   filters?: AccountFilters
@@ -72,7 +72,7 @@ export async function getAccounts(
  * Süreç:
  *  1. riotId ayrıştır → gameName + tagLine
  *  2. PUUID Riot API'den çek (account-v1, 1 req)
- *  3. MongoDB'ye kaydet (status: in_stock)
+ *  3. MongoDB'ye kaydet (status: available)
  *  4. Dashboard önbelleğini geçersiz kıl
  *
  * Rate-limit ağırlığı: 1 istek (account-v1)
@@ -121,7 +121,7 @@ export async function addAccount(
       puuid,
       summonerName: gameName,
       platform: platform.toUpperCase(),
-      status: 'in_stock',
+      status: 'available',
     });
 
     revalidatePath('/');

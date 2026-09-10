@@ -2,6 +2,8 @@ import type { AccountStatus } from '@/models/Account';
 
 interface StatusBadgeProps {
   status: AccountStatus;
+  onClick?: (status: AccountStatus) => void;
+  className?: string;
 }
 
 /** Status label ve renk eşleşmesi */
@@ -9,15 +11,15 @@ const STATUS_CONFIG: Record<
   AccountStatus,
   { label: string; bgClass: string; textClass: string; dotClass: string; borderClass: string }
 > = {
-  in_stock: {
-    label: 'Stokta',
+  available: {
+    label: 'Mevcut',
     bgClass: 'bg-green-500/10',
     textClass: 'text-green-400',
     dotClass: 'bg-green-500',
     borderClass: 'border-green-500/20',
   },
-  sold: {
-    label: 'Satıldı',
+  archived: {
+    label: 'Arşivlendi',
     bgClass: 'bg-red-500/10',
     textClass: 'text-red-400',
     dotClass: 'bg-red-500',
@@ -51,13 +53,30 @@ const STATUS_CONFIG: Record<
  *
  * @param {AccountStatus} status - Hesabın mevcut durumu
  */
-export default function StatusBadge({ status }: StatusBadgeProps) {
+export default function StatusBadge({ status, onClick, className = '' }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.error_checking;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.72rem] font-semibold tracking-wider uppercase whitespace-nowrap border ${config.bgClass} ${config.textClass} ${config.borderClass}`}>
+    <span
+      onClick={
+        onClick
+          ? (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClick(status);
+            }
+          : undefined
+      }
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.72rem] font-semibold tracking-wider uppercase whitespace-nowrap border select-none transition-all ${
+        config.bgClass
+      } ${config.textClass} ${config.borderClass} ${
+        onClick ? 'cursor-pointer hover:scale-105 active:scale-95 hover:brightness-125' : ''
+      } ${className}`}
+      title={onClick ? `"${config.label}" durumuna göre filtrele` : undefined}
+    >
       <span className={`w-1.5 h-1.5 rounded-full ${config.dotClass}`} />
       {config.label}
     </span>
   );
 }
+

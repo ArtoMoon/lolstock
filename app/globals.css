@@ -47,12 +47,50 @@
     min-height: 100vh;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Form alanları ve seçilebilir metinlerin seçilebilmesi */
+  input, textarea, select, code, pre, [data-selectable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  /* Şık masaüstü koyu kaydırma çubuğu (Custom Desktop Scrollbar) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(5, 14, 24, 0.6);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(61, 155, 233, 0.25);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(61, 155, 233, 0.5);
   }
 }
 
-/* Animations that couldn't be easily converted to tailwind v4 classes */
+/* Masaüstü pencere sürükleme bölgeleri ve animasyonlar */
 @layer utilities {
   .animate-spin-slow {
     animation: spin 0.8s linear infinite;
+  }
+
+  .drag-region {
+    -webkit-app-region: drag;
+    user-select: none;
+  }
+
+  .no-drag-region {
+    -webkit-app-region: no-drag;
   }
 }

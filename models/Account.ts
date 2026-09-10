@@ -4,12 +4,12 @@ import type { MatchDetail } from '@/lib/riot/matches';
 
 /**
  * Allowed account status values.
- * - `in_stock`      : Hesap satışa hazır, sahibi değişmemiş
- * - `sold`          : Hesap satıldı (lastMatchId değişti veya level ani artış)
- * - `active`        : Hesap aktif kullanımda (şüpheli aktivite)
+ * - `available`     : Hesap mevcut, son kontrol yapıldı
+ * - `archived`      : Hesap arşivlendi (inaktif/eski)
+ * - `active`        : Hesap aktif kullanımda
  * - `error_checking`: Son kontrol sırasında Riot API hatası oluştu
  */
-export type AccountStatus = 'in_stock' | 'sold' | 'active' | 'error_checking' | 'level';
+export type AccountStatus = 'available' | 'archived' | 'active' | 'error_checking' | 'level';
 
 /**
  * Plain-object shape of an Account document (without Mongoose methods).
@@ -99,8 +99,8 @@ const AccountSchema = new Schema<IAccountDocument>(
     },
     status: {
       type: String,
-      enum: ['in_stock', 'sold', 'active', 'error_checking', 'level'] as AccountStatus[],
-      default: 'in_stock',
+      enum: ['available', 'archived', 'active', 'error_checking', 'level'] as AccountStatus[],
+      default: 'available',
       required: true,
     },
     profileIconId: {

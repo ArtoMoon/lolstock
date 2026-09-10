@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { AccountData } from '@/app/actions/accounts';
 import { updateAccountNotes, updateAccountUsername, updateAccountStatus, updateAccountPlatform } from '@/app/actions/accounts';
 import type { AccountStatus } from '@/models/Account';
-import { checkSingleAccount, syncMatchHistory } from '@/app/actions/stockCheck';
+import { syncAccount, syncMatchHistory } from '@/app/actions/accountSync';
 import StatusBadge from '@/components/StatusBadge';
 import RankBadge from '@/components/RankBadge';
 import PlatformBadge from '@/components/PlatformBadge';
@@ -60,6 +60,19 @@ export default function AccountDetailClient({
   const ranks = account.ranks || { solo: null, flex: null };
   const matches = account.matches || [];
   const profileIconId = account.profileIconId || 1;
+
+  // League of Graphs linki oluştur
+  const [logGameName, logTagLine] = account.riotId.split('#');
+  const platform = (account.platform || 'TR1').toUpperCase();
+  // League of Graphs region kodu (platform → url segment)
+  const LOG_REGION: Record<string, string> = {
+    TR1: 'tr', EUW1: 'euw', EUN1: 'eune', NA1: 'na1', KR: 'kr',
+    BR1: 'br1', LA1: 'lan', LA2: 'las', OC1: 'oce', JP1: 'jp', RU: 'ru',
+  };
+  const logRegion = LOG_REGION[platform] || platform.toLowerCase();
+  const leagueOfGraphsUrl = logGameName && logTagLine
+    ? `https://www.leagueofgraphs.com/summoner/${logRegion}/${encodeURIComponent(logGameName)}-${encodeURIComponent(logTagLine)}`
+    : null;
 
   function handleStatusChange(newStatus: AccountStatus) {
     const oldStatus = account.status;
@@ -124,7 +137,7 @@ export default function AccountDetailClient({
     setCheckMsg(null);
     startTransition(async () => {
       try {
-        const result = await checkSingleAccount(account._id);
+        const result = await syncAccount(account._id);
         if (result.success) {
           if (result.updatedAccount) {
             setAccount((prev) => ({
@@ -239,7 +252,26 @@ export default function AccountDetailClient({
                   tagClassName="text-sm font-mono text-amber-300/90 bg-amber-400/10 border-amber-400/20"
                 />
               </div>
-              <p className="text-xs text-slate-400 mt-1">Eklendi: {createdAt}</p>
+              <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                <p className="text-xs text-slate-400">Eklendi: {createdAt}</p>
+                {/* League of Graphs Dış Linki */}
+                {leagueOfGraphsUrl && (
+                  <a
+                    href={leagueOfGraphsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#1a6b3c]/15 text-emerald-300 border border-emerald-500/25 hover:bg-[#1a6b3c]/30 hover:border-emerald-400/50 transition-all group cursor-pointer"
+                    title="League of Graphs'ta profili görüntüle"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                      <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                    </svg>
+                    <span>League of Graphs</span>
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px]">↗</span>
+                  </a>
+                )}
+              </div>
             </div>
 
             {/* Kullanıcı Adı (Giriş) */}
@@ -351,8 +383,8 @@ export default function AccountDetailClient({
                   onChange={(e) => handleStatusChange(e.target.value as AccountStatus)}
                   disabled={isPending}
                 >
-                  <option value="in_stock" className="bg-[#0f1923]">✅ Stokta</option>
-                  <option value="sold" className="bg-[#0f1923]">💸 Satıldı</option>
+                  <option value="available" className="bg-[#0f1923]">✅ Mevcut</option>
+                  <option value="archived" className="bg-[#0f1923]">📁 Arşivlendi</option>
                   <option value="active" className="bg-[#0f1923]">🎮 Aktif</option>
                   <option value="level" className="bg-[#0f1923]">⚡ Level</option>
                   <option value="error_checking" className="bg-[#0f1923]">🚫 Ban</option>

@@ -6,7 +6,7 @@
 // Not: Aslında dinamik olarak çekmek en iyisidir ama rate-limit ve hız için
 // güncel sürümü statik olarak ya da periyodik güncelleyerek kullanabiliriz.
 // Şimdilik en güncel sürümlerden birini sabit verelim, gerekirse dinamik çekeriz.
-const DDRAGON_VERSION = '14.5.1'; // TODO: Dinamik hale getirilebilir
+const DDRAGON_VERSION = '16.17.1'; // Son güncelleme: Patch 16.17
 
 export const ddragon = {
   version: DDRAGON_VERSION,

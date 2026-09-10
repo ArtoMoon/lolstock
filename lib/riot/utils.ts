@@ -5,7 +5,7 @@
 
 /**
  * Belirtilen süre kadar asenkron bekler.
- * Batch stok kontrol döngülerinde rate-limit ihlalini önlemek için kullanılır.
+ * Batch hesap senkronizasyon döngülerinde rate-limit ihlalini önlemek için kullanılır.
  *
  * @param {number} ms - Bekleme süresi (milisaniye)
  * @returns {Promise<void>}

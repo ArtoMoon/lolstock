@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!account) return { title: 'Hesap Bulunamadı' };
 
   return {
-    title: `${account.riotId} – LoLStock`,
+    title: `${account.riotId} – MyLoL`,
     description: `${account.riotId} hesabının detayları. Seviye: ${account.level}, Rank: ${account.rank}`,
   };
 }

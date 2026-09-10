@@ -11,12 +11,12 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'LoLStock – LoL Hesap Stok Takip',
-    template: '%s | LoLStock',
+    default: 'MyLoL – Kişisel LoL Hesap Dashboard',
+    template: '%s | MyLoL',
   },
   description:
     'League of Legends hesaplarınızı Riot API ile gerçek zamanlı takip edin. Level, rank ve aktivite durumunu izleyin.',
-  keywords: ['League of Legends', 'LoL hesap', 'stok takip', 'Riot API', 'rank takip'],
+  keywords: ['League of Legends', 'LoL hesap', 'kişisel dashboard', 'Riot API', 'rank takip'],
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

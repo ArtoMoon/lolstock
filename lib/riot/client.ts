@@ -119,6 +119,21 @@ export async function riotFetch<T>(url: string): Promise<T> {
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error(
+        `Riot API Anahtarının (RIOT_API_KEY) süresi dolmuş veya geçersiz! Lütfen developer.riotgames.com adresinden yeni bir API Key alıp .env.local dosyasına ekleyin. (HTTP 401: Unauthorized)`
+      );
+    }
+    if (response.status === 403) {
+      throw new Error(
+        `Riot API erişim reddedildi. API Key bu istek için yetkili değil veya engellenmiş. (HTTP 403: Forbidden)`
+      );
+    }
+    if (response.status === 404) {
+      throw new Error(
+        `Hesap Riot sunucularında bulunamadı. Lütfen Riot ID ve etiketini (Örn: Nickname#TR1) ve sunucu bölgesini kontrol edin. (HTTP 404: Not Found)`
+      );
+    }
     throw new Error(
       `Riot API HTTP ${response.status}: ${response.statusText} — ${url}`
     );

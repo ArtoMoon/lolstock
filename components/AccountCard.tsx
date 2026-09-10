@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { AccountData } from '@/app/actions/accounts';
 import { deleteAccount } from '@/app/actions/accounts';
-import { checkSingleAccount } from '@/app/actions/stockCheck';
+import { syncAccount } from '@/app/actions/accountSync';
 import StatusBadge from './StatusBadge';
 import RankBadge from './RankBadge';
 import PlatformBadge from './PlatformBadge';
@@ -16,6 +16,9 @@ import type { AccountStatus } from '@/models/Account';
 interface AccountCardProps {
   account: AccountData;
   viewMode?: 'grid' | 'compact-grid' | 'list';
+  onStatusClick?: (status: AccountStatus) => void;
+  onPlatformClick?: (platform: string) => void;
+  onRankClick?: (rank: string) => void;
 }
 
 function getRankStyle(rank?: string) {
@@ -154,7 +157,13 @@ function formatRelativeTime(date?: Date | string | null): string {
   return d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
 }
 
-export default function AccountCard({ account, viewMode = 'grid' }: AccountCardProps) {
+export default function AccountCard({
+  account,
+  viewMode = 'grid',
+  onStatusClick,
+  onPlatformClick,
+  onRankClick,
+}: AccountCardProps) {
   const [isPending, startTransition] = useTransition();
   const [checkMsg, setCheckMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -173,7 +182,7 @@ export default function AccountCard({ account, viewMode = 'grid' }: AccountCardP
   function handleCheck() {
     setCheckMsg(null);
     startTransition(async () => {
-      const result = await checkSingleAccount(account._id);
+      const result = await syncAccount(account._id);
       setCheckMsg(
         result.success
           ? { ok: true, text: result.statusChanged ? `Durum: ${result.newStatus}` : 'Bilgiler güncel' }
@@ -186,8 +195,8 @@ export default function AccountCard({ account, viewMode = 'grid' }: AccountCardP
   }
 
   const statusColors: Record<AccountStatus, string> = {
-    in_stock: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]',
-    sold: 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]',
+    available: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]',
+    archived: 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]',
     active: 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]',
     level: 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]',
     error_checking: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]'
@@ -219,7 +228,7 @@ export default function AccountCard({ account, viewMode = 'grid' }: AccountCardP
         {/* Identifier: Platform & Riot ID */}
         <div className="flex-1 min-w-[200px]">
           <div className="flex items-center gap-2 mb-0.5">
-            <PlatformBadge platform={account.platform} />
+            <PlatformBadge platform={account.platform} onClick={onPlatformClick} />
             <RiotIdDisplay riotId={account.riotId} textClassName="text-sm font-bold text-white" />
             <Link
               href={`/accounts/${account._id}`}
@@ -236,7 +245,7 @@ export default function AccountCard({ account, viewMode = 'grid' }: AccountCardP
 
         {/* Rank Showcase */}
         <div className="flex items-center gap-3 px-4 border-l border-white/5 min-w-[170px]">
-          <RankBadge rank={account.rank || 'UNRANKED'} size={32} />
+          <RankBadge rank={account.rank || 'UNRANKED'} size={32} onClick={onRankClick} />
           <div className="flex flex-col">
             <span className={`text-xs font-bold leading-tight ${rankStyle.tierColor}`}>
               {rankStyle.tierTitle}
@@ -249,7 +258,7 @@ export default function AccountCard({ account, viewMode = 'grid' }: AccountCardP
 
         {/* Status */}
         <div className="px-4 border-l border-white/5 shrink-0">
-          <StatusBadge status={account.status} />
+          <StatusBadge status={account.status} onClick={onStatusClick} />
         </div>
 
         {/* Actions */}
@@ -258,7 +267,7 @@ export default function AccountCard({ account, viewMode = 'grid' }: AccountCardP
             className="flex justify-center items-center bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 text-blue-300 w-8 h-8 rounded-lg transition-all cursor-pointer"
             onClick={handleCheck}
             disabled={isPending}
-            title="Stok Kontrol Et"
+            title="Senkronize Et"
           >
             <span className={isPending ? 'animate-spin-slow' : ''}>↻</span>
           </button>
@@ -322,7 +331,7 @@ export default function AccountCard({ account, viewMode = 'grid' }: AccountCardP
             {/* Platform & Riot ID (Login username is deliberately HIDDEN for privacy) */}
             <div className="min-w-0 flex-1 flex flex-col">
               <div className="flex items-center gap-1.5 min-w-0">
-                <PlatformBadge platform={account.platform} />
+                <PlatformBadge platform={account.platform} onClick={onPlatformClick} />
                 <RiotIdDisplay
                   riotId={account.riotId}
                   textClassName={`${isCompact ? 'text-xs' : 'text-sm'} font-bold text-white tracking-tight`}
@@ -348,7 +357,7 @@ export default function AccountCard({ account, viewMode = 'grid' }: AccountCardP
         {/* Hero Rank Section (Blitz.gg / OP.GG Style) */}
         <div className="bg-[#050b14]/75 border border-white/6 rounded-xl p-2.5 flex items-center justify-between gap-3 group-hover:border-white/10 transition-colors">
           <div className="flex items-center gap-2.5 min-w-0">
-            <RankBadge rank={account.rank || 'UNRANKED'} size={isCompact ? 34 : 40} />
+            <RankBadge rank={account.rank || 'UNRANKED'} size={isCompact ? 34 : 40} onClick={onRankClick} />
             <div className="flex flex-col min-w-0">
               <span className={`text-xs font-bold truncate leading-tight ${rankStyle.tierColor}`}>
                 {rankStyle.tierTitle}
@@ -388,7 +397,7 @@ export default function AccountCard({ account, viewMode = 'grid' }: AccountCardP
 
         {/* Footer: Status + Action Buttons */}
         <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/5 mt-auto">
-          <StatusBadge status={account.status} />
+          <StatusBadge status={account.status} onClick={onStatusClick} />
 
           <div className="flex items-center gap-1.5 shrink-0">
             <button

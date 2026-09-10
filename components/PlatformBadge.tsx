@@ -158,20 +158,34 @@ interface PlatformBadgeProps {
   platform?: string;
   showFullName?: boolean;
   className?: string;
+  onClick?: (platform: string) => void;
 }
 
 export default function PlatformBadge({
   platform,
   showFullName = false,
   className = '',
+  onClick,
 }: PlatformBadgeProps) {
   const info = getPlatformInfo(platform);
   const FlagIcon = info.Flag;
+  const platformKey = (platform || 'TR1').toUpperCase();
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wider border backdrop-blur-xs select-none shadow-xs transition-all shrink-0 ${info.badgeClass} ${className}`}
-      title={`${info.code} — ${info.name}`}
+      onClick={
+        onClick
+          ? (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClick(platformKey);
+            }
+          : undefined
+      }
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wider border backdrop-blur-xs select-none shadow-xs transition-all shrink-0 ${
+        info.badgeClass
+      } ${onClick ? 'cursor-pointer hover:scale-105 active:scale-95 hover:brightness-125' : ''} ${className}`}
+      title={onClick ? `"${info.shortLabel}" sunucusuna göre filtrele` : `${info.code} — ${info.name}`}
     >
       <FlagIcon className="w-3.5 h-2.5" />
       <span className="leading-none">{showFullName ? `${info.code} (${info.name})` : info.shortLabel}</span>

@@ -20,7 +20,7 @@ import { AccountStatus } from '@/models/Account';
  * GET /api/accounts
  *
  * Query params:
- *  - `status`  : AccountStatus filtresi (ör: "in_stock")
+ *  - `status`  : AccountStatus filtresi (ör: "available")
  *  - `search`  : riotId, username veya summonerName'de arama (case-insensitive)
  *
  * @returns {NextResponse} 200 – hesap listesi JSON dizisi
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       username: cleanUsername,
       puuid,
       summonerName: gameName,
-      status: 'in_stock',
+      status: 'available',
     });
 
     return NextResponse.json(account, { status: 201 });
