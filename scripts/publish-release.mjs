@@ -28,7 +28,8 @@ async function main() {
   const owner = 'ArtoMoon';
   const repo = 'lolstock';
 
-  console.log(`🚀 Starting GitHub Release process for ${tag}...`);
+  console.log(`🚀 Starting GitHub 
+     process for ${tag}...`);
 
   const token = await getGitToken();
   if (!token) {
@@ -49,6 +50,22 @@ async function main() {
     'User-Agent': 'MyLoL-Release-Uploader',
   };
 
+  const releaseName = `MyLoL v${version} - Desktop Setup & Feature Release`;
+  const releaseBody = `## 🎮 MyLoL v${version} Release Notes
+
+The new desktop release for MyLoL, your League of Legends alt-account management dashboard!
+
+### ✨ Key Features & Improvements:
+- 🌐 **Multi-Language Support:** Instant 1-click switching between English 🇬🇧 and Turkish 🇹🇷 with persistent language preference.
+- 🚀 **First-Launch Onboarding & Dynamic Settings:** Easily configure and test your Riot API Key and MongoDB URI directly from the UI without manual \`.env\` edits.
+- 🗑️ **Account Deletion on Details Page:** Delete accounts directly from the detail view with confirmation safety and instant redirection.
+- 📁 **Enhanced UI & Tag System:** Modernized archive status indicators with folder icon (\`📁\`) and clean layout.
+- ⚡ **Windows NSIS Installer:** Fully automated desktop installer (\`.exe\`) with Desktop Shortcut and Start Menu integration.
+
+---
+### 📥 Download & Install:
+Download **\`MyLoL-Setup-${version}.exe\`** from the **Assets** section below to install and run the application on Windows.`;
+
   // 1. Check if release exists
   let release;
   const getRelRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/tags/${tag}`, {
@@ -57,7 +74,24 @@ async function main() {
 
   if (getRelRes.ok) {
     release = await getRelRes.json();
-    console.log(`ℹ️ Release ${tag} already exists (ID: ${release.id})`);
+    console.log(`ℹ️ Release ${tag} already exists (ID: ${release.id}). Updating title and description to English...`);
+    const patchRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/${release.id}`, {
+      method: 'PATCH',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: releaseName,
+        body: releaseBody,
+      }),
+    });
+    if (patchRes.ok) {
+      release = await patchRes.json();
+      console.log(`✅ Release ${tag} successfully updated in English!`);
+    } else {
+      console.warn(`⚠️ Could not update release text: ${await patchRes.text()}`);
+    }
   } else if (getRelRes.status === 404) {
     console.log(`✨ Creating new release ${tag}...`);
     const createRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`, {
@@ -69,21 +103,8 @@ async function main() {
       body: JSON.stringify({
         tag_name: tag,
         target_commitish: 'main',
-        name: `MyLoL v${version} - Setup Kurulum & Güncellemeler`,
-        body: `## 🎮 MyLoL v${version} Sürüm Notları
-
-League of Legends yan hesap (alt-account) yönetim panelinizin yeni sürümü hazır!
-
-### ✨ Yenilikler ve Geliştirmeler:
-- 🌐 **Çoklu Dil Desteği:** Tek tıkla Türkçe 🇹🇷 ve İngilizce 🇬🇧 arasında geçiş.
-- 🚀 **İlk Açılış Onboarding & Dinamik Ayarlar:** Uygulama içinden Riot API Key ve MongoDB bağlantısını test etme ve kaydetme (.env düzenlemeye son!).
-- 🗑️ **Detay Sayfası Hesap Silme:** Hesap detayından tek tıkla güvenli hesap silme desteği.
-- 📁 **Yenilenen Arayüz:** Arşiv etiketleri ve simgeleri güncellendi.
-- ⚡ **Hızlı ve Güvenilir Kurulum:** Windows için optimize edilmiş NSIS kurulum paketi.
-
----
-### 📥 İndirme:
-Aşağıdaki **Assets** bölümünden **\`MyLoL-Setup-${version}.exe\`** dosyasını indirip doğrudan kurabilirsiniz.`,
+        name: releaseName,
+        body: releaseBody,
         draft: false,
         prerelease: false,
       }),
@@ -102,38 +123,43 @@ Aşağıdaki **Assets** bölümünden **\`MyLoL-Setup-${version}.exe\`** dosyas�
 
   // 2. Check if asset already exists in release
   const existingAsset = release.assets?.find((a) => a.name === `MyLoL-Setup-${version}.exe`);
-  if (existingAsset) {
-    console.log(`🗑️ Deleting existing asset ${existingAsset.name} (ID: ${existingAsset.id})...`);
-    await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${existingAsset.id}`, {
-      method: 'DELETE',
-      headers,
+  if (existingAsset && !process.argv.includes('--force')) {
+    console.log(`📦 Asset ${existingAsset.name} already exists in release: ${existingAsset.browser_download_url}`);
+  } else {
+    if (existingAsset) {
+      console.log(`🗑️ Deleting existing asset ${existingAsset.name} (ID: ${existingAsset.id})...`);
+      await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${existingAsset.id}`, {
+        method: 'DELETE',
+        headers,
+      });
+      console.log(`✅ Old asset removed.`);
+    }
+
+    // 3. Upload Setup Asset
+    const uploadUrl = release.upload_url.replace(/\{(\?name,label)?\}/, '') + `?name=MyLoL-Setup-${version}.exe`;
+    console.log(`⬆️ Uploading ${path.basename(setupFile)} to GitHub Release...`);
+
+    const fileBuffer = fs.readFileSync(setupFile);
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': fileBuffer.length.toString(),
+        'User-Agent': 'MyLoL-Release-Uploader',
+      },
+      body: fileBuffer,
     });
-    console.log(`✅ Old asset removed.`);
+
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      throw new Error(`Upload failed: ${uploadRes.status} ${errText}`);
+    }
+
+    const assetData = await uploadRes.json();
+    console.log(`🎉 Setup successfully uploaded: ${assetData.browser_download_url}`);
   }
 
-  // 3. Upload Setup Asset
-  const uploadUrl = release.upload_url.replace(/\{(\?name,label)?\}/, '') + `?name=MyLoL-Setup-${version}.exe`;
-  console.log(`⬆️ Uploading ${path.basename(setupFile)} to GitHub Release...`);
-
-  const fileBuffer = fs.readFileSync(setupFile);
-  const uploadRes = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/octet-stream',
-      'Content-Length': fileBuffer.length.toString(),
-      'User-Agent': 'MyLoL-Release-Uploader',
-    },
-    body: fileBuffer,
-  });
-
-  if (!uploadRes.ok) {
-    const errText = await uploadRes.text();
-    throw new Error(`Upload failed: ${uploadRes.status} ${errText}`);
-  }
-
-  const assetData = await uploadRes.json();
-  console.log(`🎉 Setup successfully uploaded: ${assetData.browser_download_url}`);
   console.log(`🔗 Release Page: ${release.html_url}`);
 }
 
